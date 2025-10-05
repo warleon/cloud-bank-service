@@ -1,0 +1,91 @@
+services:
+  # Contenedor 1: Ingesta desde MySQL (Microservicio 1)
+  ingesta01:
+    build: .
+    image: br4yangc/cloud-computing-project-ms-5:ingester-mysql
+    container_name: ingesta01-mysql
+    env_file:
+      - .env
+    environment:
+      # Ingester Type
+      - DB_TYPE=mysql
+      # MySQL Connection
+      - DB_HOST=${MYSQL_HOST:-mysql-test-db}
+      - DB_PORT=${MYSQL_PORT:-3306}
+      - DB_USER=${MYSQL_USER:-root}
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_NAME=${MYSQL_DATABASE:-testdb}
+      # S3 Configuration
+      - S3_BUCKET=${S3_BUCKET_MS1}
+      - TABLES=users,orders,products
+      # AWS Configuration
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - datalake-network
+    depends_on:
+      - dummy
+
+  # Contenedor 2: Ingesta desde PostgreSQL (Microservicio 2)
+  ingesta02:
+    build: .
+    image: br4yangc/cloud-computing-project-ms-5:ingester-postgresql
+    container_name: ingesta02-postgresql
+    env_file:
+      - .env
+    environment:
+      # Ingester Type
+      - DB_TYPE=postgresql
+      # PostgreSQL Connection
+      - DB_HOST=${POSTGRES_HOST:-postgres-test-db}
+      - DB_PORT=${POSTGRES_PORT:-5432}
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_DATABASE:-testdb}
+      # S3 Configuration
+      - S3_BUCKET=${S3_BUCKET_MS2}
+      - TABLES=customers,invoices,payments
+      # AWS Configuration
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - datalake-network
+    depends_on:
+      - dummy
+
+  # Contenedor 3: Ingesta desde MongoDB (Microservicio 3)
+  ingesta03:
+    build: .
+    image: br4yangc/cloud-computing-project-ms-5:ingester-mongodb
+    container_name: ingesta03-mongodb
+    env_file:
+      - .env
+    environment:
+      # Ingester Type
+      - DB_TYPE=mongodb
+      # MongoDB Connection
+      - DB_HOST=${MONGO_HOST:-mongo-test-db}
+      - DB_PORT=${MONGO_PORT:-27017}
+      - DB_USER=${MONGO_USER:-admin}
+      - DB_PASSWORD=${MONGO_PASSWORD}
+      - DB_NAME=${MONGO_DATABASE:-testdb}
+      # S3 Configuration
+      - S3_BUCKET=${S3_BUCKET_MS3}
+      - TABLES=inventory,shipments,suppliers
+      # AWS Configuration
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - datalake-network
+    depends_on:
+      - dummy
+
+  # Servicio dummy para depends_on
+  dummy:
+    image: alpine:latest
+    command: echo "Ingesters ready"
+    networks:
+      - datalake-network

@@ -1,0 +1,47 @@
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-cuentas-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: cuentas_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - ms2-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uadmin", "-padmin123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-cuentas:
+    build: ./api
+    image: br4yangc/cloud-bank-ms2:api-cuentas
+    container_name: api-cuentas
+    environment:
+      DB_HOST: mysql-db
+      DB_PORT: 3306
+      DB_USER: admin
+      DB_PASSWORD: admin123
+      DB_NAME: cuentas_db
+      PORT: 8002
+    ports:
+      - "8002:8002"
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - ms2-network
+
+volumes:
+  mysql_data:
+
+networks:
+  ms2-network:
+    driver: bridge

@@ -1,0 +1,42 @@
+services:
+  postgres-db:
+    image: postgres:15
+    container_name: postgres-clientes-db
+    environment:
+      POSTGRES_DB: clientes_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - ms1-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d clientes_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-clientes:
+    build: ./api
+    image: br4yangc/cloud-bank-ms1:api-clientes
+    container_name: api-clientes
+    environment:
+      DATABASE_URL: postgresql://admin:admin123@postgres-db:5432/clientes_db
+      PORT: 8001
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - ms1-network
+
+volumes:
+  postgres_data:
+
+networks:
+  ms1-network:
+    driver: bridge

@@ -1,0 +1,43 @@
+# Ignore node_modules
+node_modules/
+
+# Ignore Python virtual environments
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore build outputs
+build/
+dist/
+*.jar
+target/
+
+# Ignore logs
+*.log
+logs/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore environment files with secrets
+.env.local
+.env.production
+
+# Ignore Docker volumes
+postgres_data/
+mysql_data/
+mongo_data/
+
+# Ignore package lock files (opcional)
+# package-lock.json
+# yarn.lock
