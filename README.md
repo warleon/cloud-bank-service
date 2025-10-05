@@ -91,9 +91,37 @@ Sistema bancario completo construido con arquitectura de microservicios en AWS.
 
 ## 🚀 Guía de Despliegue
 
+### ⚡ Despliegue Automático con Reintentos
+
+**¡NUEVO!** Todos los microservicios ahora incluyen **reintentos automáticos** para conectarse a sus bases de datos. Esto garantiza que el despliegue sea completamente automático sin intervención manual.
+
+📖 **Documentación completa**: [AUTO_DEPLOY.md](./AUTO_DEPLOY.md)
+
+#### Despliegue con Script Maestro
+
+```bash
+# Clonar repositorio
+git clone https://github.com/Br4yanGC/cloud-bank-service.git
+cd cloud-bank-service
+
+# Ejecutar despliegue automático de TODOS los microservicios
+chmod +x deploy-all.sh
+./deploy-all.sh
+```
+
+El script desplegará automáticamente MS1, MS2 y MS4 con reintentos inteligentes.
+
+#### Características del Sistema de Reintentos
+
+- ✅ **MS1 (Python)**: 5 reintentos con 5s de espera (máx 25s)
+- ✅ **MS2 (Node.js)**: 5 reintentos con 5s de espera (máx 25s)
+- ✅ **MS4 (Java)**: Timeouts de 30s con reintentos automáticos
+- ✅ **Docker Compose**: `restart: on-failure` en todos los servicios
+- ✅ **Logs claros**: Indica cada intento de conexión
+
 ### Prerrequisitos
-- Cuenta de AWS
-- 3-4 instancias EC2 Ubuntu 22.04
+- Cuenta de AWS Academy (Vocareum) o AWS regular
+- 3 instancias EC2 Ubuntu 22.04 (t2.medium o t2.large)
 - Docker y Docker Compose instalados
 - Git instalado
 

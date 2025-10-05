@@ -23,6 +23,7 @@ services:
     build: ./api
     image: br4yangc/cloud-bank-ms1:api-clientes
     container_name: api-clientes
+    restart: on-failure
     environment:
       DATABASE_URL: postgresql://admin:admin123@postgres-db:5432/clientes_db
       PORT: 8001

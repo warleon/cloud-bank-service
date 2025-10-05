@@ -7,10 +7,28 @@ from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from datetime import datetime, date
 import os
+import time
 
-# Configuración de base de datos
+# Configuración de base de datos con reintentos
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:admin123@localhost:5432/clientes_db")
-engine = create_engine(DATABASE_URL)
+
+def create_db_engine(retries=5, delay=5):
+    """Crea la conexión a la base de datos con reintentos"""
+    for i in range(retries):
+        try:
+            engine = create_engine(DATABASE_URL)
+            # Intentar conectar
+            engine.connect()
+            print(f"✅ Conectado a PostgreSQL exitosamente")
+            return engine
+        except Exception as e:
+            print(f"⚠️  Intento {i + 1}/{retries} - PostgreSQL no disponible aún. Reintentando en {delay}s...")
+            if i == retries - 1:
+                print(f"❌ Error al conectar a PostgreSQL después de {retries} intentos: {e}")
+                raise
+            time.sleep(delay)
+
+engine = create_db_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

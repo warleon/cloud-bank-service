@@ -25,15 +25,22 @@ const dbConfig = {
 // Pool de conexiones
 let pool;
 
-async function initDB() {
-    try {
-        pool = mysql.createPool(dbConfig);
-        const connection = await pool.getConnection();
-        console.log('✅ Conectado a MySQL');
-        connection.release();
-    } catch (error) {
-        console.error('❌ Error al conectar a MySQL:', error);
-        process.exit(1);
+async function initDB(retries = 5, delay = 5000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            pool = mysql.createPool(dbConfig);
+            const connection = await pool.getConnection();
+            console.log('✅ Conectado a MySQL');
+            connection.release();
+            return; // Conexión exitosa
+        } catch (error) {
+            console.log(`⚠️  Intento ${i + 1}/${retries} - MySQL no disponible aún. Reintentando en ${delay/1000}s...`);
+            if (i === retries - 1) {
+                console.error('❌ Error al conectar a MySQL después de varios intentos:', error);
+                process.exit(1);
+            }
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
     }
 }
 
