@@ -156,18 +156,18 @@ function App() {
         tipo: nuevaTransaccion.tipo,
         monto: parseFloat(nuevaTransaccion.monto),
         moneda: nuevaTransaccion.moneda,
-        descripcion: nuevaTransaccion.descripcion
+        descripcion: nuevaTransaccion.descripcion || 'Sin descripción'
       };
 
-      if (nuevaTransaccion.tipo === 'DEPOSITO') {
-        data.cuentaDestinoId = parseInt(nuevaTransaccion.cuentaDestinoId);
-      } else if (nuevaTransaccion.tipo === 'RETIRO') {
-        data.cuentaOrigenId = parseInt(nuevaTransaccion.cuentaOrigenId);
-      } else if (nuevaTransaccion.tipo === 'TRANSFERENCIA') {
-        data.cuentaOrigenId = parseInt(nuevaTransaccion.cuentaOrigenId);
+      if (nuevaTransaccion.tipo === 'DEPOSITO' || nuevaTransaccion.tipo === 'TRANSFERENCIA') {
         data.cuentaDestinoId = parseInt(nuevaTransaccion.cuentaDestinoId);
       }
+      
+      if (nuevaTransaccion.tipo === 'RETIRO' || nuevaTransaccion.tipo === 'TRANSFERENCIA' || nuevaTransaccion.tipo === 'PAGO_SERVICIO') {
+        data.cuentaOrigenId = parseInt(nuevaTransaccion.cuentaOrigenId);
+      }
 
+      console.log('Enviando transacción:', data);
       await crearTransaccion(data);
       mostrarMensaje('Transacción creada exitosamente');
       cargarDatos();
@@ -180,7 +180,8 @@ function App() {
         descripcion: ''
       });
     } catch (error) {
-      mostrarMensaje('Error al crear transacción: ' + error.response?.data?.error, 'error');
+      console.error('Error completo:', error.response);
+      mostrarMensaje('Error al crear transacción: ' + (error.response?.data?.message || error.response?.data?.error || error.message), 'error');
     }
   };
 
