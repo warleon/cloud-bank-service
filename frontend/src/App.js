@@ -64,12 +64,14 @@ function App() {
         const res = await getClientes();
         setClientes(Array.isArray(res.data) ? res.data : []);
       } else if (vista === 'cuentas') {
-        const [cuentasRes, tiposRes] = await Promise.all([
+        const [cuentasRes, tiposRes, clientesRes] = await Promise.all([
           getCuentas(),
-          getTiposCuenta()
+          getTiposCuenta(),
+          getClientes()
         ]);
         setCuentas(Array.isArray(cuentasRes.data) ? cuentasRes.data : []);
         setTiposCuenta(Array.isArray(tiposRes.data) ? tiposRes.data : []);
+        setClientes(Array.isArray(clientesRes.data) ? clientesRes.data : []);
       } else if (vista === 'transacciones') {
         const res = await getTransacciones();
         setTransacciones(Array.isArray(res.data) ? res.data : []);
@@ -299,13 +301,18 @@ function App() {
                 <div className="formulario-section">
                   <h2>Crear Cuenta</h2>
                   <form onSubmit={handleCrearCuenta}>
-                    <input
-                      type="number"
-                      placeholder="ID Cliente"
+                    <select
                       value={nuevaCuenta.cliente_id}
                       onChange={(e) => setNuevaCuenta({...nuevaCuenta, cliente_id: e.target.value})}
                       required
-                    />
+                    >
+                      <option value="">Seleccionar cliente</option>
+                      {clientes.map(cliente => (
+                        <option key={cliente.cliente_id} value={cliente.cliente_id}>
+                          ID: {cliente.cliente_id} - {cliente.nombre} {cliente.apellido} ({cliente.email})
+                        </option>
+                      ))}
+                    </select>
                     <select
                       value={nuevaCuenta.tipo_cuenta_id}
                       onChange={(e) => setNuevaCuenta({...nuevaCuenta, tipo_cuenta_id: e.target.value})}
