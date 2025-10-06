@@ -15,8 +15,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Configuración
-S3_BUCKET = os.getenv('S3_BUCKET_NAME', 'cloud-bank-datalake-bucket')
+# Configuración - Buckets S3 separados por microservicio
+S3_BUCKET_MS1 = os.getenv('S3_BUCKET_MS1', 'raw-ms1-data-bgc')
+S3_BUCKET_MS2 = os.getenv('S3_BUCKET_MS2', 'raw-ms2-data-bgc')
+S3_BUCKET_MS4 = os.getenv('S3_BUCKET_MS4', 'raw-ms4-data-bgc')
 
 
 def ingest_postgresql_data():
@@ -30,23 +32,23 @@ def ingest_postgresql_data():
     os.environ['DB_PORT'] = os.getenv('POSTGRES_PORT')
     os.environ['DB_USER'] = os.getenv('POSTGRES_USER')
     os.environ['DB_PASSWORD'] = os.getenv('POSTGRES_PASSWORD')
-    os.environ['DB_NAME'] = os.getenv('POSTGRES_DB')
+    os.environ['DB_NAME'] = os.getenv('POSTGRES_DATABASE')
     
     try:
-        ingester = DataIngester('postgresql', S3_BUCKET)
+        ingester = DataIngester('postgresql', S3_BUCKET_MS1)
         ingester.connect_database()
         
         # Tabla: clientes
         logger.info("Extrayendo tabla 'clientes'...")
         clientes = ingester.extract_data('clientes')
         ingester.upload_to_s3(clientes, 'ms1_clientes')
-        logger.info(f"✅ Subidos {len(clientes)} registros de clientes a S3")
+        logger.info(f"✅ Subidos {len(clientes)} registros de clientes a S3 bucket: {S3_BUCKET_MS1}")
         
         # Tabla: documentos_identidad
         logger.info("Extrayendo tabla 'documentos_identidad'...")
         documentos = ingester.extract_data('documentos_identidad')
         ingester.upload_to_s3(documentos, 'ms1_documentos_identidad')
-        logger.info(f"✅ Subidos {len(documentos)} registros de documentos a S3")
+        logger.info(f"✅ Subidos {len(documentos)} registros de documentos a S3 bucket: {S3_BUCKET_MS1}")
         
         ingester.close()
         logger.info("✅ Ingesta de PostgreSQL completada\n")
@@ -68,23 +70,23 @@ def ingest_mysql_data():
     os.environ['DB_PORT'] = os.getenv('MYSQL_PORT')
     os.environ['DB_USER'] = os.getenv('MYSQL_USER')
     os.environ['DB_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
-    os.environ['DB_NAME'] = os.getenv('MYSQL_DB')
+    os.environ['DB_NAME'] = os.getenv('MYSQL_DATABASE')
     
     try:
-        ingester = DataIngester('mysql', S3_BUCKET)
+        ingester = DataIngester('mysql', S3_BUCKET_MS2)
         ingester.connect_database()
         
         # Tabla: tipos_cuenta
         logger.info("Extrayendo tabla 'tipos_cuenta'...")
         tipos = ingester.extract_data('tipos_cuenta')
         ingester.upload_to_s3(tipos, 'ms2_tipos_cuenta')
-        logger.info(f"✅ Subidos {len(tipos)} registros de tipos de cuenta a S3")
+        logger.info(f"✅ Subidos {len(tipos)} registros de tipos de cuenta a S3 bucket: {S3_BUCKET_MS2}")
         
         # Tabla: cuentas
         logger.info("Extrayendo tabla 'cuentas'...")
         cuentas = ingester.extract_data('cuentas')
         ingester.upload_to_s3(cuentas, 'ms2_cuentas')
-        logger.info(f"✅ Subidos {len(cuentas)} registros de cuentas a S3")
+        logger.info(f"✅ Subidos {len(cuentas)} registros de cuentas a S3 bucket: {S3_BUCKET_MS2}")
         
         ingester.close()
         logger.info("✅ Ingesta de MySQL completada\n")
@@ -106,17 +108,17 @@ def ingest_mongodb_data():
     os.environ['DB_PORT'] = os.getenv('MONGO_PORT')
     os.environ['DB_USER'] = os.getenv('MONGO_USER')
     os.environ['DB_PASSWORD'] = os.getenv('MONGO_PASSWORD')
-    os.environ['DB_NAME'] = os.getenv('MONGO_DB')
+    os.environ['DB_NAME'] = os.getenv('MONGO_DATABASE')
     
     try:
-        ingester = DataIngester('mongodb', S3_BUCKET)
+        ingester = DataIngester('mongodb', S3_BUCKET_MS4)
         ingester.connect_database()
         
         # Colección: transacciones
         logger.info("Extrayendo colección 'transacciones'...")
         transacciones = ingester.extract_data('transacciones')
         ingester.upload_to_s3(transacciones, 'ms4_transacciones')
-        logger.info(f"✅ Subidos {len(transacciones)} documentos de transacciones a S3")
+        logger.info(f"✅ Subidos {len(transacciones)} documentos de transacciones a S3 bucket: {S3_BUCKET_MS4}")
         
         ingester.close()
         logger.info("✅ Ingesta de MongoDB completada\n")
@@ -130,7 +132,7 @@ def ingest_mongodb_data():
 def main():
     """Función principal"""
     logger.info("🚀 Iniciando proceso de ingesta completo")
-    logger.info(f"Bucket S3: {S3_BUCKET}")
+    logger.info(f"Buckets S3: MS1={S3_BUCKET_MS1}, MS2={S3_BUCKET_MS2}, MS4={S3_BUCKET_MS4}")
     logger.info("")
     
     results = {

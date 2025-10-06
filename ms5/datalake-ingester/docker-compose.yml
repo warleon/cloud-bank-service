@@ -9,7 +9,9 @@
     environment:
       # AWS Configuration
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
-      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+      - S3_BUCKET_MS1=${S3_BUCKET_MS1}
+      - S3_BUCKET_MS2=${S3_BUCKET_MS2}
+      - S3_BUCKET_MS4=${S3_BUCKET_MS4}
       
       # MS1 - PostgreSQL (Clientes)
       - POSTGRES_HOST=${POSTGRES_HOST}
