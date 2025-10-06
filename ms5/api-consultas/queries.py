@@ -2,7 +2,16 @@
 Queries SQL predefinidas para el API - Sistema Bancario Cloud Bank
 """
 
-PREDEFINED_QUERIES = {
+PREDEFINED_QUE    "transacciones_resumen": """
+        SELECT 
+            COUNT(*) as total_transacciones,
+            SUM(CAST(monto AS DOUBLE)) as volumen_total,
+            AVG(CAST(monto AS DOUBLE)) as monto_promedio,
+            MIN(CAST(monto AS DOUBLE)) as monto_minimo,
+            MAX(CAST(monto AS DOUBLE)) as monto_maximo,
+            'PEN' as moneda
+        FROM cloud_bank_db.ms4_ms4_transacciones
+    """,
     # ========== CLIENTES (PostgreSQL - MS1) ==========
     "clientes_resumen": """
         SELECT 
@@ -43,15 +52,16 @@ PREDEFINED_QUERIES = {
     
     "cuentas_por_tipo": """
         SELECT 
-            t.nombre_tipo as tipo_cuenta,
+            t.nombre as tipo_cuenta,
             t.descripcion,
             COUNT(c.cuenta_id) as cantidad_cuentas,
-            COALESCE(SUM(c.saldo), 0) as saldo_total,
-            COALESCE(AVG(c.saldo), 0) as saldo_promedio
+            COALESCE(SUM(CAST(c.saldo AS DOUBLE)), 0) as saldo_total,
+            COALESCE(AVG(CAST(c.saldo AS DOUBLE)), 0) as saldo_promedio,
+            'PEN' as moneda
         FROM cloud_bank_db.ms2_ms2_tipos_cuenta t
         LEFT JOIN cloud_bank_db.ms2_ms2_cuentas c 
             ON t.tipo_cuenta_id = c.tipo_cuenta_id
-        GROUP BY t.nombre_tipo, t.descripcion
+        GROUP BY t.nombre, t.descripcion
         ORDER BY saldo_total DESC
     """,
     
@@ -61,15 +71,16 @@ PREDEFINED_QUERIES = {
             cli.nombre,
             cli.apellido,
             cli.email,
-            c.saldo,
-            t.nombre_tipo as tipo_cuenta,
+            CAST(c.saldo AS DOUBLE) as saldo,
+            c.moneda,
+            t.nombre as tipo_cuenta,
             c.fecha_apertura
         FROM cloud_bank_db.ms2_ms2_cuentas c
         JOIN cloud_bank_db.ms1_ms1_clientes cli 
             ON c.cliente_id = cli.cliente_id
         JOIN cloud_bank_db.ms2_ms2_tipos_cuenta t 
             ON c.tipo_cuenta_id = t.tipo_cuenta_id
-        ORDER BY c.saldo DESC
+        ORDER BY CAST(c.saldo AS DOUBLE) DESC
         LIMIT {limit}
     """,
     
@@ -103,9 +114,10 @@ PREDEFINED_QUERIES = {
     "transacciones_por_tipo": """
         SELECT 
             tipo,
-            COUNT(*) as cantidad_transacciones,
-            SUM(monto) as monto_total,
-            AVG(monto) as monto_promedio
+            COUNT(*) as cantidad,
+            SUM(CAST(monto AS DOUBLE)) as monto_total,
+            AVG(CAST(monto AS DOUBLE)) as monto_promedio,
+            'PEN' as moneda
         FROM cloud_bank_db.ms4_ms4_transacciones
         GROUP BY tipo
         ORDER BY monto_total DESC
