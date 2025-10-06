@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  ms3-perfil-cliente:
+    build: ./api
+    container_name: ms3-perfil-cliente
+    ports:
+      - "6000:6000"
+    environment:
+      # URLs de otros microservicios (ajustar según IPs de tus EC2)
+      - MS1_URL=http://18.212.214.255:5000
+      - MS2_URL=http://54.242.189.131:3000
+      - MS4_URL=http://54.87.40.69:8080
+      - PORT=6000
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    networks:
+      - cloud-bank-network
+
+networks:
+  cloud-bank-network:
+    driver: bridge
