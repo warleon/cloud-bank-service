@@ -10,8 +10,9 @@ COPY requirements.txt .
 # Instalar dependencias
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar el script de ingesta
+# Copiar scripts de ingesta
 COPY ingester.py .
+COPY run_ingestion.py .
 
-# Comando por defecto
-CMD ["python", "ingester.py"]
+# Comando por defecto (será sobrescrito por docker-compose)
+CMD ["python", "run_ingestion.py"]
