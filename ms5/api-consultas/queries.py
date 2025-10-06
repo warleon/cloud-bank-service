@@ -2,7 +2,8 @@
 Queries SQL predefinidas para el API - Sistema Bancario Cloud Bank
 """
 
-PREDEFINED_QUE    "transacciones_resumen": """
+PREDEFINED_QUERIES = {
+    "transacciones_resumen": """
         SELECT 
             COUNT(*) as total_transacciones,
             SUM(CAST(monto AS DOUBLE)) as volumen_total,
