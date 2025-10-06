@@ -3,16 +3,6 @@ Queries SQL predefinidas para el API - Sistema Bancario Cloud Bank
 """
 
 PREDEFINED_QUERIES = {
-    "transacciones_resumen": """
-        SELECT 
-            COUNT(*) as total_transacciones,
-            SUM(CAST(monto AS DOUBLE)) as volumen_total,
-            AVG(CAST(monto AS DOUBLE)) as monto_promedio,
-            MIN(CAST(monto AS DOUBLE)) as monto_minimo,
-            MAX(CAST(monto AS DOUBLE)) as monto_maximo,
-            'PEN' as moneda
-        FROM cloud_bank_db.ms4_ms4_transacciones
-    """,
     # ========== CLIENTES (PostgreSQL - MS1) ==========
     "clientes_resumen": """
         SELECT 
@@ -105,10 +95,11 @@ PREDEFINED_QUERIES = {
     "transacciones_resumen": """
         SELECT 
             COUNT(*) as total_transacciones,
-            SUM(monto) as monto_total,
-            AVG(monto) as monto_promedio,
-            MIN(monto) as monto_minimo,
-            MAX(monto) as monto_maximo
+            SUM(CAST(monto AS DOUBLE)) as volumen_total,
+            AVG(CAST(monto AS DOUBLE)) as monto_promedio,
+            MIN(CAST(monto AS DOUBLE)) as monto_minimo,
+            MAX(CAST(monto AS DOUBLE)) as monto_maximo,
+            'PEN' as moneda
         FROM cloud_bank_db.ms4_ms4_transacciones
     """,
     
