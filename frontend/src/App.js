@@ -73,8 +73,12 @@ function App() {
         setTiposCuenta(Array.isArray(tiposRes.data) ? tiposRes.data : []);
         setClientes(Array.isArray(clientesRes.data) ? clientesRes.data : []);
       } else if (vista === 'transacciones') {
-        const res = await getTransacciones();
-        setTransacciones(Array.isArray(res.data) ? res.data : []);
+        const [transaccionesRes, cuentasRes] = await Promise.all([
+          getTransacciones(),
+          getCuentas()
+        ]);
+        setTransacciones(Array.isArray(transaccionesRes.data) ? transaccionesRes.data : []);
+        setCuentas(Array.isArray(cuentasRes.data) ? cuentasRes.data : []);
       }
     } catch (error) {
       console.error('Error al cargar datos:', error);
@@ -82,7 +86,7 @@ function App() {
       // Resetear estados a arrays vacíos
       if (vista === 'clientes') setClientes([]);
       if (vista === 'cuentas') { setCuentas([]); setTiposCuenta([]); }
-      if (vista === 'transacciones') setTransacciones([]);
+      if (vista === 'transacciones') { setTransacciones([]); setCuentas([]); }
     } finally {
       setLoading(false);
     }
@@ -378,23 +382,33 @@ function App() {
                     </select>
 
                     {(nuevaTransaccion.tipo === 'RETIRO' || nuevaTransaccion.tipo === 'TRANSFERENCIA') && (
-                      <input
-                        type="number"
-                        placeholder="ID Cuenta Origen"
+                      <select
                         value={nuevaTransaccion.cuentaOrigenId}
                         onChange={(e) => setNuevaTransaccion({...nuevaTransaccion, cuentaOrigenId: e.target.value})}
                         required
-                      />
+                      >
+                        <option value="">Seleccionar cuenta origen</option>
+                        {cuentas.map(cuenta => (
+                          <option key={cuenta.cuenta_id} value={cuenta.cuenta_id}>
+                            💳 {cuenta.numero_cuenta} - {cuenta.tipo_cuenta_nombre} - Saldo: {cuenta.moneda} {parseFloat(cuenta.saldo).toFixed(2)}
+                          </option>
+                        ))}
+                      </select>
                     )}
 
                     {(nuevaTransaccion.tipo === 'DEPOSITO' || nuevaTransaccion.tipo === 'TRANSFERENCIA') && (
-                      <input
-                        type="number"
-                        placeholder="ID Cuenta Destino"
+                      <select
                         value={nuevaTransaccion.cuentaDestinoId}
                         onChange={(e) => setNuevaTransaccion({...nuevaTransaccion, cuentaDestinoId: e.target.value})}
                         required
-                      />
+                      >
+                        <option value="">Seleccionar cuenta destino</option>
+                        {cuentas.map(cuenta => (
+                          <option key={cuenta.cuenta_id} value={cuenta.cuenta_id}>
+                            💳 {cuenta.numero_cuenta} - {cuenta.tipo_cuenta_nombre} - Saldo: {cuenta.moneda} {parseFloat(cuenta.saldo).toFixed(2)}
+                          </option>
+                        ))}
+                      </select>
                     )}
 
                     <input
