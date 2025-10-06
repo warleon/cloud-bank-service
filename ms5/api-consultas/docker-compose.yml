@@ -8,14 +8,12 @@ services:
     env_file:
       - .env
     environment:
-      # AWS Configuration
+      # AWS Configuration (IAM Role usado en EC2, no necesita credenciales explícitas)
+      - AWS_REGION=${AWS_REGION:-us-east-1}
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
       # Athena Configuration
-      - ATHENA_DATABASE=${ATHENA_DATABASE:-datalake_raw}
-      - ATHENA_OUTPUT_LOCATION=${ATHENA_OUTPUT_LOCATION}
+      - AWS_ATHENA_DATABASE=${AWS_ATHENA_DATABASE:-cloud_bank_db}
+      - AWS_ATHENA_OUTPUT_LOCATION=${AWS_ATHENA_OUTPUT_LOCATION}
       - ATHENA_WORKGROUP=${ATHENA_WORKGROUP:-primary}
       # API Configuration
       - API_HOST=${API_HOST:-0.0.0.0}

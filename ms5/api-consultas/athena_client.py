@@ -21,15 +21,18 @@ class AthenaClient:
         Args:
             region_name: Región de AWS (opcional, usa variable de entorno)
         """
-        region = region_name or os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+        region = region_name or os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
         self.athena = boto3.client('athena', region_name=region)
         self.s3 = boto3.client('s3', region_name=region)
-        self.database = os.getenv("ATHENA_DATABASE", "datalake_raw")
-        self.output_location = os.getenv("ATHENA_OUTPUT_LOCATION", "s3://raw-ms1-data-bgc/athena-results/")
+        self.database = os.getenv("AWS_ATHENA_DATABASE", os.getenv("ATHENA_DATABASE", "cloud_bank_db"))
+        self.output_location = os.getenv("AWS_ATHENA_OUTPUT_LOCATION", os.getenv("ATHENA_OUTPUT_LOCATION", ""))
         self.workgroup = os.getenv("ATHENA_WORKGROUP", "primary")
         self.last_execution_time_ms = 0
         
-        logger.info(f"AthenaClient inicializado - Database: {self.database}, Region: {region}")
+        if not self.output_location:
+            raise ValueError("AWS_ATHENA_OUTPUT_LOCATION no está configurado. Ejemplo: s3://bucket-name/athena-results/")
+        
+        logger.info(f"AthenaClient inicializado - Database: {self.database}, Region: {region}, Output: {self.output_location}")
     
     def execute_query(self, query: str, database: Optional[str] = None) -> List[Dict[str, Any]]:
         """
