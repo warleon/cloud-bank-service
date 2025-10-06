@@ -215,10 +215,21 @@ function App() {
         getClientesVIP(10000, 10) // VIPs con patrimonio > 10,000
       ]);
       
-      setDashboardData(dashboard.data);
+      // Transformar array del dashboard a objeto
+      const dashboardObj = {};
+      if (dashboard.data && dashboard.data.data) {
+        dashboard.data.data.forEach(item => {
+          const key = item.metrica.toLowerCase().replace(/ /g, '_');
+          dashboardObj[key] = item.valor;
+        });
+        // Agregar moneda por defecto
+        dashboardObj.moneda_principal = 'PEN';
+      }
+      
+      setDashboardData(dashboardObj);
       setCuentasAnalytics(cuentasRes.data);
       setTransaccionesAnalytics(transRes.data);
-      setClientesVIP(vips.data.results || []);
+      setClientesVIP(vips.data.results || vips.data.data || []);
     } catch (error) {
       mostrarMensaje('Error al cargar analytics: ' + (error.response?.data?.error || error.message), 'error');
       console.error('Error en analytics:', error);
@@ -511,38 +522,38 @@ function App() {
                 <p className="subtitle">Análisis de datos desde Amazon Athena (consultas pueden tomar 5-10 segundos)</p>
 
                 {/* Dashboard Ejecutivo */}
-                {dashboardData && (
+                {dashboardData && Object.keys(dashboardData).length > 0 && (
                   <div className="dashboard-grid">
                     <h3>Resumen Ejecutivo</h3>
                     <div className="metrics-cards">
                       <div className="metric-card">
                         <h4>👥 Clientes</h4>
-                        <p className="metric-value">{dashboardData.total_clientes}</p>
+                        <p className="metric-value">{dashboardData.total_clientes || dashboardData.clientes_activos || '0'}</p>
                       </div>
                       <div className="metric-card">
                         <h4>💳 Cuentas</h4>
-                        <p className="metric-value">{dashboardData.total_cuentas}</p>
+                        <p className="metric-value">{dashboardData.total_cuentas || '0'}</p>
                       </div>
                       <div className="metric-card">
                         <h4>💸 Transacciones</h4>
-                        <p className="metric-value">{dashboardData.total_transacciones}</p>
+                        <p className="metric-value">{dashboardData.total_transacciones || '0'}</p>
                       </div>
                       <div className="metric-card">
                         <h4>💰 Volumen Total</h4>
                         <p className="metric-value">
-                          {dashboardData.moneda_principal} {parseFloat(dashboardData.volumen_total).toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                          {dashboardData.moneda_principal || 'PEN'} {parseFloat(dashboardData.volumen_transaccional || dashboardData.saldo_total_banco || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}
                         </p>
                       </div>
                       <div className="metric-card">
                         <h4>📊 Saldo Promedio</h4>
                         <p className="metric-value">
-                          {dashboardData.moneda_principal} {parseFloat(dashboardData.saldo_promedio).toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                          {dashboardData.moneda_principal || 'PEN'} {parseFloat(dashboardData.saldo_promedio || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}
                         </p>
                       </div>
                       <div className="metric-card">
                         <h4>💵 Transacción Promedio</h4>
                         <p className="metric-value">
-                          {dashboardData.moneda_principal} {parseFloat(dashboardData.transaccion_promedio).toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                          {dashboardData.moneda_principal || 'PEN'} {parseFloat(dashboardData.transacción_promedio || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}
                         </p>
                       </div>
                     </div>
@@ -554,12 +565,12 @@ function App() {
                   <div className="analytics-section">
                     <h3>Análisis de Cuentas</h3>
                     <div className="stats-grid">
-                      {cuentasAnalytics.results && cuentasAnalytics.results.map((cuenta, idx) => (
+                      {(cuentasAnalytics.results || cuentasAnalytics.data || []).map((cuenta, idx) => (
                         <div key={idx} className="stat-card">
-                          <h4>{cuenta.tipo_cuenta}</h4>
-                          <p>Total: <strong>{cuenta.cantidad}</strong> cuentas</p>
-                          <p>Saldo Total: <strong>{cuenta.moneda} {parseFloat(cuenta.saldo_total).toLocaleString('es-PE', {minimumFractionDigits: 2})}</strong></p>
-                          <p>Promedio: {cuenta.moneda} {parseFloat(cuenta.saldo_promedio).toLocaleString('es-PE', {minimumFractionDigits: 2})}</p>
+                          <h4>{cuenta.tipo_cuenta || cuenta.nombre_tipo || 'N/A'}</h4>
+                          <p>Total: <strong>{cuenta.cantidad || cuenta.cantidad_cuentas || '0'}</strong> cuentas</p>
+                          <p>Saldo Total: <strong>PEN {parseFloat(cuenta.saldo_total || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}</strong></p>
+                          <p>Promedio: PEN {parseFloat(cuenta.saldo_promedio || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}</p>
                         </div>
                       ))}
                     </div>
@@ -571,12 +582,12 @@ function App() {
                   <div className="analytics-section">
                     <h3>Análisis de Transacciones</h3>
                     <div className="stats-grid">
-                      {transaccionesAnalytics.results && transaccionesAnalytics.results.map((tx, idx) => (
+                      {(transaccionesAnalytics.results || transaccionesAnalytics.data || []).map((tx, idx) => (
                         <div key={idx} className="stat-card">
-                          <h4>{tx.tipo}</h4>
-                          <p>Cantidad: <strong>{tx.cantidad}</strong></p>
-                          <p>Monto Total: <strong>{tx.moneda} {parseFloat(tx.monto_total).toLocaleString('es-PE', {minimumFractionDigits: 2})}</strong></p>
-                          <p>Promedio: {tx.moneda} {parseFloat(tx.monto_promedio).toLocaleString('es-PE', {minimumFractionDigits: 2})}</p>
+                          <h4>{tx.tipo || 'N/A'}</h4>
+                          <p>Cantidad: <strong>{tx.cantidad || tx.total_transacciones || '0'}</strong></p>
+                          <p>Monto Total: <strong>PEN {parseFloat(tx.monto_total || tx.volumen_total || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}</strong></p>
+                          <p>Promedio: PEN {parseFloat(tx.monto_promedio || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}</p>
                         </div>
                       ))}
                     </div>
