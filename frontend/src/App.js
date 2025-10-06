@@ -210,8 +210,8 @@ function App() {
     try {
       const [dashboard, cuentasRes, transRes, vips] = await Promise.all([
         getDashboardEjecutivo(),
-        getCuentasResumen(),
-        getTransaccionesResumen(),
+        getCuentasPorTipo(),
+        getTransaccionesPorTipo(),
         getClientesVIP(10000, 10) // VIPs con patrimonio > 10,000
       ]);
       
