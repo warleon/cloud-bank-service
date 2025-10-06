@@ -335,7 +335,7 @@ function App() {
                         <h3>💳 {cuenta.numero_cuenta}</h3>
                         <p><strong>{cuenta.tipo_cuenta_nombre}</strong></p>
                         <p>Cliente ID: {cuenta.cliente_id}</p>
-                        <p className="saldo">Saldo: {cuenta.moneda} {cuenta.saldo.toFixed(2)}</p>
+                        <p className="saldo">Saldo: {cuenta.moneda} {parseFloat(cuenta.saldo).toFixed(2)}</p>
                         <span className={`badge ${cuenta.estado}`}>{cuenta.estado}</span>
                       </div>
                     ))}
@@ -413,7 +413,7 @@ function App() {
                       <div key={tx.id} className="item-card">
                         <h3>🔖 {tx.transaccionId}</h3>
                         <p><strong>{tx.tipo}</strong></p>
-                        <p>Monto: {tx.moneda} {tx.monto.toFixed(2)}</p>
+                        <p>Monto: {tx.moneda} {parseFloat(tx.monto).toFixed(2)}</p>
                         <p>{tx.descripcion}</p>
                         <p className="fecha">{new Date(tx.fecha).toLocaleString()}</p>
                         <span className={`badge ${tx.estado.toLowerCase()}`}>{tx.estado}</span>
