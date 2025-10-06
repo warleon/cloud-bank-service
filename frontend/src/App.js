@@ -62,20 +62,25 @@ function App() {
     try {
       if (vista === 'clientes') {
         const res = await getClientes();
-        setClientes(res.data);
+        setClientes(Array.isArray(res.data) ? res.data : []);
       } else if (vista === 'cuentas') {
         const [cuentasRes, tiposRes] = await Promise.all([
           getCuentas(),
           getTiposCuenta()
         ]);
-        setCuentas(cuentasRes.data);
-        setTiposCuenta(tiposRes.data);
+        setCuentas(Array.isArray(cuentasRes.data) ? cuentasRes.data : []);
+        setTiposCuenta(Array.isArray(tiposRes.data) ? tiposRes.data : []);
       } else if (vista === 'transacciones') {
         const res = await getTransacciones();
-        setTransacciones(res.data);
+        setTransacciones(Array.isArray(res.data) ? res.data : []);
       }
     } catch (error) {
-      mostrarMensaje('Error al cargar datos: ' + error.message, 'error');
+      console.error('Error al cargar datos:', error);
+      mostrarMensaje('Error al cargar datos: ' + (error.response?.data?.detail || error.message), 'error');
+      // Resetear estados a arrays vacíos
+      if (vista === 'clientes') setClientes([]);
+      if (vista === 'cuentas') { setCuentas([]); setTiposCuenta([]); }
+      if (vista === 'transacciones') setTransacciones([]);
     } finally {
       setLoading(false);
     }
