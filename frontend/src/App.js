@@ -20,6 +20,7 @@ import {
   getTransaccionesDetalladas,
   getClientesVIP
 } from './api';
+import PerfilCliente from './components/PerfilCliente';
 
 function App() {
   const [vista, setVista] = useState('clientes');
@@ -271,6 +272,12 @@ function App() {
           💸 Transacciones
         </button>
         <button 
+          className={vista === 'perfil' ? 'active' : ''} 
+          onClick={() => setVista('perfil')}
+        >
+          🔍 Perfil Cliente 360°
+        </button>
+        <button 
           className={vista === 'analytics' ? 'active' : ''} 
           onClick={() => setVista('analytics')}
         >
@@ -513,6 +520,11 @@ function App() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* VISTA PERFIL CLIENTE 360 */}
+            {vista === 'perfil' && (
+              <PerfilCliente />
             )}
 
             {/* VISTA ANALYTICS */}

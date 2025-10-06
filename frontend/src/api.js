@@ -5,7 +5,8 @@ export const API_ENDPOINTS = {
   clientes: process.env.REACT_APP_MS1_URL || 'http://localhost:8001',
   cuentas: process.env.REACT_APP_MS2_URL || 'http://localhost:8002',
   transacciones: process.env.REACT_APP_MS4_URL || 'http://localhost:8004',
-  analytics: process.env.REACT_APP_MS5_URL || 'http://localhost:8000'
+  analytics: process.env.REACT_APP_MS5_URL || 'http://localhost:8000',
+  perfilCliente: process.env.REACT_APP_MS3_URL || 'http://localhost:6000'
 };
 
 // Cliente Axios para MS1 - Clientes
@@ -39,6 +40,15 @@ export const transaccionesAPI = axios.create({
 export const analyticsAPI = axios.create({
   baseURL: API_ENDPOINTS.analytics,
   timeout: 30000, // Mayor timeout para queries de Athena
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Cliente Axios para MS3 - Perfil Cliente (Vista 360°)
+export const perfilClienteAPI = axios.create({
+  baseURL: API_ENDPOINTS.perfilCliente,
+  timeout: 30000, // Mayor timeout porque agrega datos de múltiples MS
   headers: {
     'Content-Type': 'application/json'
   }
@@ -93,3 +103,10 @@ export const getTransaccionesDetalladas = (limit = 50) => analyticsAPI.get(`/api
 export const getClientesVIP = (threshold = 10000, limit = 20) => 
   analyticsAPI.get(`/api/analisis/clientes-vip?threshold=${threshold}&limit=${limit}`);
 export const getActividadDiaria = () => analyticsAPI.get('/api/analisis/actividad-diaria');
+
+// ========== MS3 - PERFIL COMPLETO CLIENTE (Vista 360°) ==========
+export const getPerfilCompleto = (clienteId) => perfilClienteAPI.get(`/api/clientes/${clienteId}/perfil-completo`);
+export const buscarClientes = (query) => perfilClienteAPI.get(`/api/clientes/buscar?q=${encodeURIComponent(query)}`);
+export const getTransaccionesCliente = (clienteId, limit = 50) => 
+  perfilClienteAPI.get(`/api/clientes/${clienteId}/transacciones?limit=${limit}`);
+
