@@ -28,7 +28,7 @@ public class TransaccionService {
         }
         
         if (transaccion.getEstado() == null) {
-            transaccion.setEstado(EstadoTransaccion.PENDIENTE);
+            transaccion.setEstado(EstadoTransaccion.COMPLETADA); // Cambiar a COMPLETADA por defecto
         }
 
         return transaccionRepository.save(transaccion);
