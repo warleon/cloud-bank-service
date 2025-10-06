@@ -22,7 +22,6 @@ public class Transaccion {
     private String id;
 
     @Indexed(unique = true)
-    @NotNull(message = "El ID de transacción es requerido")
     private String transaccionId;
 
     @NotNull(message = "El tipo de transacción es requerido")
