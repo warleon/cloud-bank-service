@@ -95,7 +95,16 @@ function App() {
   const handleCrearCliente = async (e) => {
     e.preventDefault();
     try {
-      await crearCliente(nuevoCliente);
+      // Preparar datos: convertir strings vacíos a null para fechas
+      const clienteData = {
+        ...nuevoCliente,
+        documento: {
+          ...nuevoCliente.documento,
+          fecha_emision: nuevoCliente.documento.fecha_emision || null,
+          fecha_vencimiento: nuevoCliente.documento.fecha_vencimiento || null
+        }
+      };
+      await crearCliente(clienteData);
       mostrarMensaje('Cliente creado exitosamente');
       cargarDatos();
       setNuevoCliente({
@@ -111,7 +120,8 @@ function App() {
         }
       });
     } catch (error) {
-      mostrarMensaje('Error al crear cliente: ' + error.response?.data?.detail, 'error');
+      mostrarMensaje('Error al crear cliente: ' + (error.response?.data?.detail || error.message), 'error');
+      console.error('Error completo:', error.response?.data);
     }
   };
 
