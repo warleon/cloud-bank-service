@@ -120,6 +120,13 @@ def ingest_mongodb_data():
         ingester.upload_to_s3(transacciones, 'ms4_transacciones')
         logger.info(f"✅ Subidos {len(transacciones)} documentos de transacciones a S3 bucket: {S3_BUCKET_MS4}")
         
+        # Crear archivo dummy para forzar estructura de múltiples carpetas
+        # Esto hace que el Crawler use el formato ms4_ms4_transacciones en lugar de ms4_raw_ms4_data_bgc
+        logger.info("Creando archivo metadata dummy...")
+        dummy_data = [{"_metadata": "dummy", "purpose": "force crawler to use folder names"}]
+        ingester.upload_to_s3(dummy_data, 'ms4_metadata')
+        logger.info(f"✅ Archivo metadata dummy creado para consistencia del Crawler")
+        
         ingester.close()
         logger.info("✅ Ingesta de MongoDB completada\n")
         return True
