@@ -4,7 +4,8 @@ import axios from 'axios';
 export const API_ENDPOINTS = {
   clientes: process.env.REACT_APP_MS1_URL || 'http://localhost:8001',
   cuentas: process.env.REACT_APP_MS2_URL || 'http://localhost:8002',
-  transacciones: process.env.REACT_APP_MS4_URL || 'http://localhost:8004'
+  transacciones: process.env.REACT_APP_MS4_URL || 'http://localhost:8004',
+  analytics: process.env.REACT_APP_MS5_URL || 'http://localhost:8000'
 };
 
 // Cliente Axios para MS1 - Clientes
@@ -34,6 +35,15 @@ export const transaccionesAPI = axios.create({
   }
 });
 
+// Cliente Axios para MS5 - Analytics (Athena)
+export const analyticsAPI = axios.create({
+  baseURL: API_ENDPOINTS.analytics,
+  timeout: 30000, // Mayor timeout para queries de Athena
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
 // Funciones de la API
 
 // ========== CLIENTES ==========
@@ -57,3 +67,29 @@ export const getTransaccion = (id) => transaccionesAPI.get(`/transacciones/${id}
 export const getTransaccionesPorCuenta = (cuentaId) => transaccionesAPI.get(`/transacciones/cuenta/${cuentaId}`);
 export const crearTransaccion = (data) => transaccionesAPI.post('/transacciones', data);
 export const actualizarEstadoTransaccion = (id, estado) => transaccionesAPI.patch(`/transacciones/${id}/estado`, { estado });
+
+// ========== ANALYTICS (MS5 - Athena) ==========
+// Dashboard
+export const getDashboardEjecutivo = () => analyticsAPI.get('/api/dashboard');
+
+// Clientes Analytics
+export const getClientesResumen = () => analyticsAPI.get('/api/clientes/resumen');
+export const getClientesLista = (limit = 50) => analyticsAPI.get(`/api/clientes/lista?limit=${limit}`);
+export const getClientesConCuentas = (limit = 50) => analyticsAPI.get(`/api/clientes/con-cuentas?limit=${limit}`);
+
+// Cuentas Analytics
+export const getCuentasResumen = () => analyticsAPI.get('/api/cuentas/resumen');
+export const getCuentasPorTipo = () => analyticsAPI.get('/api/cuentas/por-tipo');
+export const getCuentasTopSaldos = (limit = 20) => analyticsAPI.get(`/api/cuentas/top-saldos?limit=${limit}`);
+
+// Transacciones Analytics
+export const getTransaccionesResumen = () => analyticsAPI.get('/api/transacciones/resumen');
+export const getTransaccionesPorTipo = () => analyticsAPI.get('/api/transacciones/por-tipo');
+export const getTransaccionesPorEstado = () => analyticsAPI.get('/api/transacciones/por-estado');
+export const getTransaccionesRecientes = (limit = 50) => analyticsAPI.get(`/api/transacciones/recientes?limit=${limit}`);
+export const getTransaccionesDetalladas = (limit = 50) => analyticsAPI.get(`/api/transacciones/detalladas?limit=${limit}`);
+
+// Análisis Avanzado
+export const getClientesVIP = (threshold = 10000, limit = 20) => 
+  analyticsAPI.get(`/api/analisis/clientes-vip?threshold=${threshold}&limit=${limit}`);
+export const getActividadDiaria = () => analyticsAPI.get('/api/analisis/actividad-diaria');

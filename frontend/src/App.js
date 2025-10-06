@@ -10,7 +10,15 @@ import {
   actualizarSaldo,
   getTransacciones,
   getTransaccionesPorCuenta,
-  crearTransaccion
+  crearTransaccion,
+  getDashboardEjecutivo,
+  getCuentasResumen,
+  getCuentasPorTipo,
+  getCuentasTopSaldos,
+  getTransaccionesResumen,
+  getTransaccionesPorTipo,
+  getTransaccionesDetalladas,
+  getClientesVIP
 } from './api';
 
 function App() {
@@ -21,6 +29,12 @@ function App() {
   const [tiposCuenta, setTiposCuenta] = useState([]);
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState('');
+
+  // Estados para Analytics
+  const [dashboardData, setDashboardData] = useState(null);
+  const [cuentasAnalytics, setCuentasAnalytics] = useState(null);
+  const [transaccionesAnalytics, setTransaccionesAnalytics] = useState(null);
+  const [clientesVIP, setClientesVIP] = useState([]);
 
   // Estados para formularios
   const [nuevoCliente, setNuevoCliente] = useState({
@@ -58,6 +72,11 @@ function App() {
   }, [vista]);
 
   const cargarDatos = async () => {
+    if (vista === 'analytics') {
+      cargarAnalytics();
+      return;
+    }
+
     setLoading(true);
     try {
       if (vista === 'clientes') {
@@ -185,6 +204,29 @@ function App() {
     }
   };
 
+  // Cargar datos de Analytics
+  const cargarAnalytics = async () => {
+    setLoading(true);
+    try {
+      const [dashboard, cuentasRes, transRes, vips] = await Promise.all([
+        getDashboardEjecutivo(),
+        getCuentasResumen(),
+        getTransaccionesResumen(),
+        getClientesVIP(10000, 10) // VIPs con patrimonio > 10,000
+      ]);
+      
+      setDashboardData(dashboard.data);
+      setCuentasAnalytics(cuentasRes.data);
+      setTransaccionesAnalytics(transRes.data);
+      setClientesVIP(vips.data.results || []);
+    } catch (error) {
+      mostrarMensaje('Error al cargar analytics: ' + (error.response?.data?.error || error.message), 'error');
+      console.error('Error en analytics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -216,6 +258,12 @@ function App() {
           onClick={() => setVista('transacciones')}
         >
           💸 Transacciones
+        </button>
+        <button 
+          className={vista === 'analytics' ? 'active' : ''} 
+          onClick={() => setVista('analytics')}
+        >
+          📊 Analytics
         </button>
       </nav>
 
@@ -453,6 +501,111 @@ function App() {
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* VISTA ANALYTICS */}
+            {vista === 'analytics' && (
+              <div className="vista-container analytics-view">
+                <h2>📊 Analytics - DataLake Dashboard</h2>
+                <p className="subtitle">Análisis de datos desde Amazon Athena (consultas pueden tomar 5-10 segundos)</p>
+
+                {/* Dashboard Ejecutivo */}
+                {dashboardData && (
+                  <div className="dashboard-grid">
+                    <h3>Resumen Ejecutivo</h3>
+                    <div className="metrics-cards">
+                      <div className="metric-card">
+                        <h4>👥 Clientes</h4>
+                        <p className="metric-value">{dashboardData.total_clientes}</p>
+                      </div>
+                      <div className="metric-card">
+                        <h4>💳 Cuentas</h4>
+                        <p className="metric-value">{dashboardData.total_cuentas}</p>
+                      </div>
+                      <div className="metric-card">
+                        <h4>💸 Transacciones</h4>
+                        <p className="metric-value">{dashboardData.total_transacciones}</p>
+                      </div>
+                      <div className="metric-card">
+                        <h4>💰 Volumen Total</h4>
+                        <p className="metric-value">
+                          {dashboardData.moneda_principal} {parseFloat(dashboardData.volumen_total).toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                        </p>
+                      </div>
+                      <div className="metric-card">
+                        <h4>📊 Saldo Promedio</h4>
+                        <p className="metric-value">
+                          {dashboardData.moneda_principal} {parseFloat(dashboardData.saldo_promedio).toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                        </p>
+                      </div>
+                      <div className="metric-card">
+                        <h4>💵 Transacción Promedio</h4>
+                        <p className="metric-value">
+                          {dashboardData.moneda_principal} {parseFloat(dashboardData.transaccion_promedio).toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Resumen de Cuentas */}
+                {cuentasAnalytics && (
+                  <div className="analytics-section">
+                    <h3>Análisis de Cuentas</h3>
+                    <div className="stats-grid">
+                      {cuentasAnalytics.results && cuentasAnalytics.results.map((cuenta, idx) => (
+                        <div key={idx} className="stat-card">
+                          <h4>{cuenta.tipo_cuenta}</h4>
+                          <p>Total: <strong>{cuenta.cantidad}</strong> cuentas</p>
+                          <p>Saldo Total: <strong>{cuenta.moneda} {parseFloat(cuenta.saldo_total).toLocaleString('es-PE', {minimumFractionDigits: 2})}</strong></p>
+                          <p>Promedio: {cuenta.moneda} {parseFloat(cuenta.saldo_promedio).toLocaleString('es-PE', {minimumFractionDigits: 2})}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Resumen de Transacciones */}
+                {transaccionesAnalytics && (
+                  <div className="analytics-section">
+                    <h3>Análisis de Transacciones</h3>
+                    <div className="stats-grid">
+                      {transaccionesAnalytics.results && transaccionesAnalytics.results.map((tx, idx) => (
+                        <div key={idx} className="stat-card">
+                          <h4>{tx.tipo}</h4>
+                          <p>Cantidad: <strong>{tx.cantidad}</strong></p>
+                          <p>Monto Total: <strong>{tx.moneda} {parseFloat(tx.monto_total).toLocaleString('es-PE', {minimumFractionDigits: 2})}</strong></p>
+                          <p>Promedio: {tx.moneda} {parseFloat(tx.monto_promedio).toLocaleString('es-PE', {minimumFractionDigits: 2})}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Clientes VIP */}
+                {clientesVIP.length > 0 && (
+                  <div className="analytics-section">
+                    <h3>🌟 Clientes VIP (Patrimonio {'>'} 10,000)</h3>
+                    <div className="lista-items">
+                      {clientesVIP.map((cliente, idx) => (
+                        <div key={idx} className="item-card vip">
+                          <h4>👤 {cliente.nombre} {cliente.apellido}</h4>
+                          <p>📧 {cliente.email}</p>
+                          <p>💳 Cuentas: <strong>{cliente.total_cuentas}</strong></p>
+                          <p>💰 Patrimonio Total: <strong>PEN {parseFloat(cliente.patrimonio_total).toLocaleString('es-PE', {minimumFractionDigits: 2})}</strong></p>
+                          <p>📊 Saldo Promedio: PEN {parseFloat(cliente.saldo_promedio).toLocaleString('es-PE', {minimumFractionDigits: 2})}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {!dashboardData && !loading && (
+                  <div className="empty-state">
+                    <p>📊 Haz clic en "Analytics" para cargar el dashboard</p>
+                  </div>
+                )}
               </div>
             )}
           </>
