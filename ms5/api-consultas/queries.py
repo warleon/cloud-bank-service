@@ -1,155 +1,249 @@
 """
-Queries SQL predefinidas para el API
+Queries SQL predefinidas para el API - Sistema Bancario Cloud Bank
 """
 
 PREDEFINED_QUERIES = {
-    # ========== VENTAS (MySQL) ==========
-    "ventas_resumen": """
+    # ========== CLIENTES (PostgreSQL - MS1) ==========
+    "clientes_resumen": """
         SELECT 
-            COUNT(*) as total_ordenes,
-            SUM(total_amount) as ventas_totales,
-            AVG(total_amount) as ticket_promedio,
-            MIN(total_amount) as orden_minima,
-            MAX(total_amount) as orden_maxima
-        FROM mysql_ms1_orders
+            COUNT(*) as total_clientes,
+            COUNT(CASE WHEN estado = 'activo' THEN 1 END) as clientes_activos,
+            COUNT(CASE WHEN estado = 'inactivo' THEN 1 END) as clientes_inactivos
+        FROM cloud_bank_db.ms1_ms1_clientes
     """,
     
-    "ventas_por_usuario": """
+    
+    "clientes_lista": """
         SELECT 
-            u.username,
-            u.email,
-            COUNT(o.id) as total_ordenes,
-            COALESCE(SUM(o.total_amount), 0) as total_gastado,
-            COALESCE(AVG(o.total_amount), 0) as promedio_orden
-        FROM mysql_ms1_users u
-        LEFT JOIN mysql_ms1_orders o ON u.id = o.user_id
-        GROUP BY u.username, u.email
-        ORDER BY total_gastado DESC
+            c.cliente_id,
+            c.nombre,
+            c.apellido,
+            c.email,
+            c.telefono,
+            c.estado,
+            d.tipo_documento,
+            d.numero_documento
+        FROM cloud_bank_db.ms1_ms1_clientes c
+        LEFT JOIN cloud_bank_db.ms1_ms1_documentos_identidad d 
+            ON c.cliente_id = d.cliente_id
+        ORDER BY c.fecha_registro DESC
+        LIMIT {limit}
     """,
     
-    "ordenes_por_estado": """
+    # ========== CUENTAS (MySQL - MS2) ==========
+    "cuentas_resumen": """
         SELECT 
-            status,
-            COUNT(*) as cantidad_ordenes,
-            SUM(total_amount) as monto_total,
-            AVG(total_amount) as promedio_monto
-        FROM mysql_ms1_orders
-        GROUP BY status
+            COUNT(*) as total_cuentas,
+            SUM(saldo) as saldo_total_banco,
+            AVG(saldo) as saldo_promedio,
+            MIN(saldo) as saldo_minimo,
+            MAX(saldo) as saldo_maximo
+        FROM cloud_bank_db.ms2_ms2_cuentas
+    """,
+    
+    "cuentas_por_tipo": """
+        SELECT 
+            t.nombre_tipo as tipo_cuenta,
+            t.descripcion,
+            COUNT(c.cuenta_id) as cantidad_cuentas,
+            COALESCE(SUM(c.saldo), 0) as saldo_total,
+            COALESCE(AVG(c.saldo), 0) as saldo_promedio
+        FROM cloud_bank_db.ms2_ms2_tipos_cuenta t
+        LEFT JOIN cloud_bank_db.ms2_ms2_cuentas c 
+            ON t.tipo_cuenta_id = c.tipo_cuenta_id
+        GROUP BY t.nombre_tipo, t.descripcion
+        ORDER BY saldo_total DESC
+    """,
+    
+    "cuentas_top_saldos": """
+        SELECT 
+            c.numero_cuenta,
+            cli.nombre,
+            cli.apellido,
+            cli.email,
+            c.saldo,
+            t.nombre_tipo as tipo_cuenta,
+            c.fecha_apertura
+        FROM cloud_bank_db.ms2_ms2_cuentas c
+        JOIN cloud_bank_db.ms1_ms1_clientes cli 
+            ON c.cliente_id = cli.cliente_id
+        JOIN cloud_bank_db.ms2_ms2_tipos_cuenta t 
+            ON c.tipo_cuenta_id = t.tipo_cuenta_id
+        ORDER BY c.saldo DESC
+        LIMIT {limit}
+    """,
+    
+    "clientes_con_cuentas": """
+        SELECT 
+            cli.cliente_id,
+            cli.nombre,
+            cli.apellido,
+            cli.email,
+            COUNT(c.cuenta_id) as total_cuentas,
+            COALESCE(SUM(c.saldo), 0) as saldo_total
+        FROM cloud_bank_db.ms1_ms1_clientes cli
+        LEFT JOIN cloud_bank_db.ms2_ms2_cuentas c 
+            ON cli.cliente_id = c.cliente_id
+        GROUP BY cli.cliente_id, cli.nombre, cli.apellido, cli.email
+        ORDER BY saldo_total DESC
+        LIMIT {limit}
+    """,
+    
+    # ========== TRANSACCIONES (MongoDB - MS4) ==========
+    "transacciones_resumen": """
+        SELECT 
+            COUNT(*) as total_transacciones,
+            SUM(monto) as monto_total,
+            AVG(monto) as monto_promedio,
+            MIN(monto) as monto_minimo,
+            MAX(monto) as monto_maximo
+        FROM cloud_bank_db.ms4_ms4_transacciones
+    """,
+    
+    "transacciones_por_tipo": """
+        SELECT 
+            tipo,
+            COUNT(*) as cantidad_transacciones,
+            SUM(monto) as monto_total,
+            AVG(monto) as monto_promedio
+        FROM cloud_bank_db.ms4_ms4_transacciones
+        GROUP BY tipo
         ORDER BY monto_total DESC
     """,
     
-    "productos_top": """
+    "transacciones_por_estado": """
         SELECT 
-            name,
-            category,
-            price,
-            stock,
-            price * stock as valor_inventario
-        FROM mysql_ms1_products
-        WHERE stock > 0
-        ORDER BY valor_inventario DESC
+            estado,
+            COUNT(*) as cantidad_transacciones,
+            SUM(monto) as monto_total,
+            AVG(monto) as monto_promedio
+        FROM cloud_bank_db.ms4_ms4_transacciones
+        GROUP BY estado
+        ORDER BY cantidad_transacciones DESC
+    """,
+    
+    "transacciones_recientes": """
+        SELECT 
+            transaccionid,
+            tipo,
+            monto,
+            fecha,
+            estado,
+            descripcion,
+            cuentaorigenid,
+            cuentadestinoid
+        FROM cloud_bank_db.ms4_ms4_transacciones
+        ORDER BY fecha DESC
         LIMIT {limit}
     """,
     
-    # ========== CLIENTES B2B (PostgreSQL) ==========
-    "clientes_top": """
+    "transacciones_detalladas": """
         SELECT 
-            c.name as cliente,
-            c.country,
-            c.email,
-            COUNT(i.id) as total_facturas,
-            COALESCE(SUM(i.total), 0) as facturacion_total
-        FROM postgres_ms2_customers c
-        LEFT JOIN postgres_ms2_invoices i ON c.id = i.customer_id
-        GROUP BY c.name, c.country, c.email
-        ORDER BY facturacion_total DESC
+            t.transaccionid,
+            t.tipo,
+            t.monto,
+            t.fecha,
+            t.estado,
+            t.descripcion,
+            co.numero_cuenta as cuenta_origen,
+            cd.numero_cuenta as cuenta_destino,
+            clio.nombre as cliente_origen_nombre,
+            clio.apellido as cliente_origen_apellido,
+            clid.nombre as cliente_destino_nombre,
+            clid.apellido as cliente_destino_apellido
+        FROM cloud_bank_db.ms4_ms4_transacciones t
+        LEFT JOIN cloud_bank_db.ms2_ms2_cuentas co 
+            ON t.cuentaorigenid = co.cuenta_id
+        LEFT JOIN cloud_bank_db.ms2_ms2_cuentas cd 
+            ON t.cuentadestinoid = cd.cuenta_id
+        LEFT JOIN cloud_bank_db.ms1_ms1_clientes clio 
+            ON co.cliente_id = clio.cliente_id
+        LEFT JOIN cloud_bank_db.ms1_ms1_clientes clid 
+            ON cd.cliente_id = clid.cliente_id
+        ORDER BY t.fecha DESC
         LIMIT {limit}
     """,
     
-    "facturas_estado": """
-        SELECT 
-            i.invoice_number,
-            c.name as cliente,
-            i.total as monto_factura,
-            COALESCE(SUM(p.amount), 0) as monto_pagado,
-            i.total - COALESCE(SUM(p.amount), 0) as saldo_pendiente,
-            i.status as estado_factura
-        FROM postgres_ms2_invoices i
-        JOIN postgres_ms2_customers c ON i.customer_id = c.id
-        LEFT JOIN postgres_ms2_payments p ON i.id = p.invoice_id
-        GROUP BY i.invoice_number, c.name, i.total, i.status
-        ORDER BY saldo_pendiente DESC
-    """,
-    
-    # ========== INVENTARIO (MongoDB) ==========
-    "inventario_bajo_stock": """
-        SELECT 
-            product_id,
-            name,
-            quantity,
-            warehouse_location,
-            supplier
-        FROM mongo_ms3_inventory
-        WHERE CAST(quantity AS INTEGER) < {threshold}
-        ORDER BY CAST(quantity AS INTEGER) ASC
-    """,
-    
-    "envios_estado": """
-        SELECT 
-            status,
-            carrier,
-            COUNT(*) as total_envios
-        FROM mongo_ms3_shipments
-        GROUP BY status, carrier
-        ORDER BY total_envios DESC
-    """,
-    
-    # ========== DASHBOARD EJECUTIVO ==========
+    # ========== DASHBOARD EJECUTIVO BANCARIO ==========
     "dashboard_ejecutivo": """
         SELECT 
-            'Total Usuarios' as metrica,
+            'Total Clientes' as metrica,
             CAST(COUNT(*) AS VARCHAR) as valor,
-            'users' as fuente
-        FROM mysql_ms1_users
+            'clientes' as categoria
+        FROM cloud_bank_db.ms1_ms1_clientes
         
         UNION ALL
         
         SELECT 
-            'Total Órdenes' as metrica,
+            'Total Cuentas' as metrica,
             CAST(COUNT(*) AS VARCHAR) as valor,
-            'orders' as fuente
-        FROM mysql_ms1_orders
+            'cuentas' as categoria
+        FROM cloud_bank_db.ms2_ms2_cuentas
         
         UNION ALL
         
         SELECT 
-            'Ingresos Totales' as metrica,
-            CAST(ROUND(SUM(total_amount), 2) AS VARCHAR) as valor,
-            'orders' as fuente
-        FROM mysql_ms1_orders
+            'Saldo Total Banco' as metrica,
+            CAST(ROUND(SUM(saldo), 2) AS VARCHAR) as valor,
+            'cuentas' as categoria
+        FROM cloud_bank_db.ms2_ms2_cuentas
         
         UNION ALL
         
         SELECT 
-            'Total Clientes B2B' as metrica,
+            'Total Transacciones' as metrica,
             CAST(COUNT(*) AS VARCHAR) as valor,
-            'customers' as fuente
-        FROM postgres_ms2_customers
+            'transacciones' as categoria
+        FROM cloud_bank_db.ms4_ms4_transacciones
         
         UNION ALL
         
         SELECT 
-            'Productos en Inventario' as metrica,
+            'Volumen Transaccional' as metrica,
+            CAST(ROUND(SUM(monto), 2) AS VARCHAR) as valor,
+            'transacciones' as categoria
+        FROM cloud_bank_db.ms4_ms4_transacciones
+        
+        UNION ALL
+        
+        SELECT 
+            'Clientes Activos' as metrica,
             CAST(COUNT(*) AS VARCHAR) as valor,
-            'inventory' as fuente
-        FROM mongo_ms3_inventory
-        
-        UNION ALL
-        
+            'clientes' as categoria
+        FROM cloud_bank_db.ms1_ms1_clientes
+        WHERE estado = 'activo'
+    """,
+    
+    # ========== ANÁLISIS DE NEGOCIO ==========
+    "analisis_clientes_vip": """
         SELECT 
-            'Unidades en Stock' as metrica,
-            CAST(SUM(CAST(quantity AS INTEGER)) AS VARCHAR) as valor,
-            'inventory' as fuente
-        FROM mongo_ms3_inventory
+            cli.cliente_id,
+            cli.nombre,
+            cli.apellido,
+            cli.email,
+            COUNT(c.cuenta_id) as total_cuentas,
+            SUM(c.saldo) as patrimonio_total,
+            COUNT(t.transaccionid) as total_transacciones
+        FROM cloud_bank_db.ms1_ms1_clientes cli
+        LEFT JOIN cloud_bank_db.ms2_ms2_cuentas c 
+            ON cli.cliente_id = c.cliente_id
+        LEFT JOIN cloud_bank_db.ms4_ms4_transacciones t 
+            ON c.cuenta_id = t.cuentaorigenid OR c.cuenta_id = t.cuentadestinoid
+        GROUP BY cli.cliente_id, cli.nombre, cli.apellido, cli.email
+        HAVING SUM(c.saldo) > {threshold}
+        ORDER BY patrimonio_total DESC
+        LIMIT {limit}
+    """,
+    
+    "actividad_transaccional_diaria": """
+        SELECT 
+            DATE_FORMAT(fecha, '%Y-%m-%d') as fecha,
+            tipo,
+            COUNT(*) as cantidad,
+            SUM(monto) as monto_total
+        FROM cloud_bank_db.ms4_ms4_transacciones
+        WHERE fecha >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
+        GROUP BY DATE_FORMAT(fecha, '%Y-%m-%d'), tipo
+        ORDER BY fecha DESC, monto_total DESC
     """
 }

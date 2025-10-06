@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 
 # Crear aplicación FastAPI
 app = FastAPI(
-    title="DataLake Analytics API",
-    description="API REST para consultas analíticas sobre el DataLake",
-    version="1.0.0"
+    title="Cloud Bank DataLake Analytics API",
+    description="API REST para consultas analíticas sobre el DataLake del sistema bancario Cloud Bank",
+    version="2.0.0"
 )
 
 # Configurar CORS (para permitir acceso desde navegadores)
@@ -49,7 +49,7 @@ athena_client = AthenaClient()
 # Modelos Pydantic
 class CustomQueryRequest(BaseModel):
     query: str
-    database: str = "datalake_raw"
+    database: str = "cloud_bank_db"
 
 
 class QueryResponse(BaseModel):
@@ -66,9 +66,17 @@ class QueryResponse(BaseModel):
 async def root():
     """Endpoint raíz - Health check"""
     return {
-        "service": "DataLake Analytics API",
+        "service": "Cloud Bank DataLake Analytics API",
         "status": "running",
-        "version": "1.0.0",
+        "version": "2.0.0",
+        "description": "API de consultas analíticas para Cloud Bank",
+        "endpoints": {
+            "clientes": "/api/clientes/*",
+            "cuentas": "/api/cuentas/*",
+            "transacciones": "/api/transacciones/*",
+            "analisis": "/api/analisis/*",
+            "dashboard": "/api/dashboard"
+        },
         "timestamp": datetime.now().isoformat()
     }
 
@@ -91,13 +99,13 @@ async def health_check():
         raise HTTPException(status_code=503, detail="Service unhealthy")
 
 
-# ========== VENTAS (MySQL) ==========
+# ========== CLIENTES (PostgreSQL - MS1) ==========
 
-@app.get("/api/ventas/resumen", tags=["Ventas"], response_model=QueryResponse)
-async def get_ventas_resumen():
-    """Obtener resumen general de ventas"""
+@app.get("/api/clientes/resumen", tags=["Clientes"], response_model=QueryResponse)
+async def get_clientes_resumen():
+    """Obtener resumen de clientes del banco"""
     try:
-        query = PREDEFINED_QUERIES["ventas_resumen"]
+        query = PREDEFINED_QUERIES["clientes_resumen"]
         results = athena_client.execute_query(query)
         
         return QueryResponse(
@@ -107,15 +115,15 @@ async def get_ventas_resumen():
             execution_time_ms=athena_client.last_execution_time_ms
         )
     except Exception as e:
-        logger.error(f"Error en ventas_resumen: {e}")
+        logger.error(f"Error en clientes_resumen: {e}")
         return QueryResponse(success=False, error=str(e))
 
 
-@app.get("/api/ventas/por-usuario", tags=["Ventas"], response_model=QueryResponse)
-async def get_ventas_por_usuario():
-    """Obtener ventas agrupadas por usuario"""
+@app.get("/api/clientes/lista", tags=["Clientes"], response_model=QueryResponse)
+async def get_clientes_lista(limit: int = Query(50, ge=1, le=500)):
+    """Obtener lista de clientes con sus documentos"""
     try:
-        query = PREDEFINED_QUERIES["ventas_por_usuario"]
+        query = PREDEFINED_QUERIES["clientes_lista"].format(limit=limit)
         results = athena_client.execute_query(query)
         
         return QueryResponse(
@@ -125,15 +133,17 @@ async def get_ventas_por_usuario():
             execution_time_ms=athena_client.last_execution_time_ms
         )
     except Exception as e:
-        logger.error(f"Error en ventas_por_usuario: {e}")
+        logger.error(f"Error en clientes_lista: {e}")
         return QueryResponse(success=False, error=str(e))
 
 
-@app.get("/api/ventas/por-estado", tags=["Ventas"], response_model=QueryResponse)
-async def get_ventas_por_estado():
-    """Obtener ventas agrupadas por estado de orden"""
+# ========== CUENTAS (MySQL - MS2) ==========
+
+@app.get("/api/cuentas/resumen", tags=["Cuentas"], response_model=QueryResponse)
+async def get_cuentas_resumen():
+    """Obtener resumen financiero del banco"""
     try:
-        query = PREDEFINED_QUERIES["ordenes_por_estado"]
+        query = PREDEFINED_QUERIES["cuentas_resumen"]
         results = athena_client.execute_query(query)
         
         return QueryResponse(
@@ -143,15 +153,15 @@ async def get_ventas_por_estado():
             execution_time_ms=athena_client.last_execution_time_ms
         )
     except Exception as e:
-        logger.error(f"Error en ventas_por_estado: {e}")
+        logger.error(f"Error en cuentas_resumen: {e}")
         return QueryResponse(success=False, error=str(e))
 
 
-@app.get("/api/productos/top", tags=["Productos"], response_model=QueryResponse)
-async def get_top_productos(limit: int = Query(10, ge=1, le=100)):
-    """Obtener productos más valiosos por inventario"""
+@app.get("/api/cuentas/por-tipo", tags=["Cuentas"], response_model=QueryResponse)
+async def get_cuentas_por_tipo():
+    """Obtener cuentas agrupadas por tipo"""
     try:
-        query = PREDEFINED_QUERIES["productos_top"].format(limit=limit)
+        query = PREDEFINED_QUERIES["cuentas_por_tipo"]
         results = athena_client.execute_query(query)
         
         return QueryResponse(
@@ -161,17 +171,15 @@ async def get_top_productos(limit: int = Query(10, ge=1, le=100)):
             execution_time_ms=athena_client.last_execution_time_ms
         )
     except Exception as e:
-        logger.error(f"Error en productos_top: {e}")
+        logger.error(f"Error en cuentas_por_tipo: {e}")
         return QueryResponse(success=False, error=str(e))
 
 
-# ========== CLIENTES B2B (PostgreSQL) ==========
-
-@app.get("/api/clientes/top", tags=["Clientes B2B"], response_model=QueryResponse)
-async def get_top_clientes(limit: int = Query(10, ge=1, le=100)):
-    """Obtener top clientes por facturación"""
+@app.get("/api/cuentas/top-saldos", tags=["Cuentas"], response_model=QueryResponse)
+async def get_cuentas_top_saldos(limit: int = Query(20, ge=1, le=100)):
+    """Obtener cuentas con mayores saldos"""
     try:
-        query = PREDEFINED_QUERIES["clientes_top"].format(limit=limit)
+        query = PREDEFINED_QUERIES["cuentas_top_saldos"].format(limit=limit)
         results = athena_client.execute_query(query)
         
         return QueryResponse(
@@ -181,15 +189,15 @@ async def get_top_clientes(limit: int = Query(10, ge=1, le=100)):
             execution_time_ms=athena_client.last_execution_time_ms
         )
     except Exception as e:
-        logger.error(f"Error en clientes_top: {e}")
+        logger.error(f"Error en cuentas_top_saldos: {e}")
         return QueryResponse(success=False, error=str(e))
 
 
-@app.get("/api/facturas/estado", tags=["Clientes B2B"], response_model=QueryResponse)
-async def get_estado_facturas():
-    """Obtener estado de facturas y pagos"""
+@app.get("/api/clientes/con-cuentas", tags=["Clientes"], response_model=QueryResponse)
+async def get_clientes_con_cuentas(limit: int = Query(50, ge=1, le=500)):
+    """Obtener clientes con sus cuentas y patrimonio total"""
     try:
-        query = PREDEFINED_QUERIES["facturas_estado"]
+        query = PREDEFINED_QUERIES["clientes_con_cuentas"].format(limit=limit)
         results = athena_client.execute_query(query)
         
         return QueryResponse(
@@ -199,17 +207,17 @@ async def get_estado_facturas():
             execution_time_ms=athena_client.last_execution_time_ms
         )
     except Exception as e:
-        logger.error(f"Error en facturas_estado: {e}")
+        logger.error(f"Error en clientes_con_cuentas: {e}")
         return QueryResponse(success=False, error=str(e))
 
 
-# ========== INVENTARIO (MongoDB) ==========
+# ========== TRANSACCIONES (MongoDB - MS4) ==========
 
-@app.get("/api/inventario/bajo-stock", tags=["Inventario"], response_model=QueryResponse)
-async def get_inventario_bajo_stock(threshold: int = Query(100, ge=1)):
-    """Obtener productos con stock bajo el umbral especificado"""
+@app.get("/api/transacciones/resumen", tags=["Transacciones"], response_model=QueryResponse)
+async def get_transacciones_resumen():
+    """Obtener resumen de transacciones"""
     try:
-        query = PREDEFINED_QUERIES["inventario_bajo_stock"].format(threshold=threshold)
+        query = PREDEFINED_QUERIES["transacciones_resumen"]
         results = athena_client.execute_query(query)
         
         return QueryResponse(
@@ -219,15 +227,15 @@ async def get_inventario_bajo_stock(threshold: int = Query(100, ge=1)):
             execution_time_ms=athena_client.last_execution_time_ms
         )
     except Exception as e:
-        logger.error(f"Error en inventario_bajo_stock: {e}")
+        logger.error(f"Error en transacciones_resumen: {e}")
         return QueryResponse(success=False, error=str(e))
 
 
-@app.get("/api/envios/estado", tags=["Logística"], response_model=QueryResponse)
-async def get_estado_envios():
-    """Obtener resumen de estado de envíos"""
+@app.get("/api/transacciones/por-tipo", tags=["Transacciones"], response_model=QueryResponse)
+async def get_transacciones_por_tipo():
+    """Obtener transacciones agrupadas por tipo"""
     try:
-        query = PREDEFINED_QUERIES["envios_estado"]
+        query = PREDEFINED_QUERIES["transacciones_por_tipo"]
         results = athena_client.execute_query(query)
         
         return QueryResponse(
@@ -237,15 +245,113 @@ async def get_estado_envios():
             execution_time_ms=athena_client.last_execution_time_ms
         )
     except Exception as e:
-        logger.error(f"Error en envios_estado: {e}")
+        logger.error(f"Error en transacciones_por_tipo: {e}")
         return QueryResponse(success=False, error=str(e))
 
 
-# ========== DASHBOARD EJECUTIVO ==========
+@app.get("/api/transacciones/por-estado", tags=["Transacciones"], response_model=QueryResponse)
+async def get_transacciones_por_estado():
+    """Obtener transacciones agrupadas por estado"""
+    try:
+        query = PREDEFINED_QUERIES["transacciones_por_estado"]
+        results = athena_client.execute_query(query)
+        
+        return QueryResponse(
+            success=True,
+            data=results,
+            rows_count=len(results) if results else 0,
+            execution_time_ms=athena_client.last_execution_time_ms
+        )
+    except Exception as e:
+        logger.error(f"Error en transacciones_por_estado: {e}")
+        return QueryResponse(success=False, error=str(e))
+
+
+@app.get("/api/transacciones/recientes", tags=["Transacciones"], response_model=QueryResponse)
+async def get_transacciones_recientes(limit: int = Query(50, ge=1, le=500)):
+    """Obtener transacciones más recientes"""
+    try:
+        query = PREDEFINED_QUERIES["transacciones_recientes"].format(limit=limit)
+        results = athena_client.execute_query(query)
+        
+        return QueryResponse(
+            success=True,
+            data=results,
+            rows_count=len(results) if results else 0,
+            execution_time_ms=athena_client.last_execution_time_ms
+        )
+    except Exception as e:
+        logger.error(f"Error en transacciones_recientes: {e}")
+        return QueryResponse(success=False, error=str(e))
+
+
+@app.get("/api/transacciones/detalladas", tags=["Transacciones"], response_model=QueryResponse)
+async def get_transacciones_detalladas(limit: int = Query(50, ge=1, le=500)):
+    """Obtener transacciones con información completa de cuentas y clientes"""
+    try:
+        query = PREDEFINED_QUERIES["transacciones_detalladas"].format(limit=limit)
+        results = athena_client.execute_query(query)
+        
+        return QueryResponse(
+            success=True,
+            data=results,
+            rows_count=len(results) if results else 0,
+            execution_time_ms=athena_client.last_execution_time_ms
+        )
+    except Exception as e:
+        logger.error(f"Error en transacciones_detalladas: {e}")
+        return QueryResponse(success=False, error=str(e))
+
+
+# ========== ANÁLISIS DE NEGOCIO ==========
+
+@app.get("/api/analisis/clientes-vip", tags=["Análisis"], response_model=QueryResponse)
+async def get_clientes_vip(
+    threshold: float = Query(10000, ge=0),
+    limit: int = Query(20, ge=1, le=100)
+):
+    """Obtener clientes VIP con patrimonio sobre el umbral especificado"""
+    try:
+        query = PREDEFINED_QUERIES["analisis_clientes_vip"].format(
+            threshold=threshold,
+            limit=limit
+        )
+        results = athena_client.execute_query(query)
+        
+        return QueryResponse(
+            success=True,
+            data=results,
+            rows_count=len(results) if results else 0,
+            execution_time_ms=athena_client.last_execution_time_ms
+        )
+    except Exception as e:
+        logger.error(f"Error en analisis_clientes_vip: {e}")
+        return QueryResponse(success=False, error=str(e))
+
+
+@app.get("/api/analisis/actividad-diaria", tags=["Análisis"], response_model=QueryResponse)
+async def get_actividad_transaccional_diaria():
+    """Obtener actividad transaccional de los últimos 30 días"""
+    try:
+        query = PREDEFINED_QUERIES["actividad_transaccional_diaria"]
+        results = athena_client.execute_query(query)
+        
+        return QueryResponse(
+            success=True,
+            data=results,
+            rows_count=len(results) if results else 0,
+            execution_time_ms=athena_client.last_execution_time_ms
+        )
+    except Exception as e:
+        logger.error(f"Error en actividad_transaccional_diaria: {e}")
+        return QueryResponse(success=False, error=str(e))
+
+
+# ========== DASHBOARD EJECUTIVO BANCARIO ==========
 
 @app.get("/api/dashboard", tags=["Dashboard"], response_model=QueryResponse)
-async def get_dashboard():
-    """Obtener métricas para dashboard ejecutivo"""
+async def get_dashboard_ejecutivo():
+    """Obtener métricas clave para dashboard ejecutivo bancario"""
     try:
         query = PREDEFINED_QUERIES["dashboard_ejecutivo"]
         results = athena_client.execute_query(query)
