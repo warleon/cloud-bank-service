@@ -1,4 +1,4 @@
-# DataLake Architecture - AWS Cloud Project
+# MS5 - DataLake con AWS S3, Glue y Athena (ACTUALIZADO PARA EC2)
 
 Arquitectura completa de DataLake desplegada en **EC2 Ubuntu 22.04** con ingesta de datos desde múltiples fuentes, catalogación con Glue y consultas analíticas vía API REST.
 
