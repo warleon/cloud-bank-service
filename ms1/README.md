@@ -1,14 +1,51 @@
 # MS1 - Gestión de Clientes
 
-Microservicio para gestionar clientes del banco.
+## 📋 Descripción
+
+Microservicio para la gestión completa de clientes bancarios y sus documentos de identidad. Proporciona operaciones CRUD sobre clientes y permite la asociación de múltiples documentos de identidad por cliente.
+
+## 🎯 Propósito
+
+- Centralizar la información de clientes del banco
+- Gestionar datos personales y documentos de identidad
+- Proporcionar API REST para otros microservicios
+- Mantener integridad referencial con documentos asociados
 
 ## 🏗️ Arquitectura
 
-- **Lenguaje**: Python 3.11
-- **Framework**: FastAPI
-- **Base de Datos**: PostgreSQL 15
-- **Puerto API**: 8001
-- **Puerto DB**: 5432
+```mermaid
+graph TB
+    subgraph "MS1 - Clientes"
+        API[FastAPI Application]
+        DB[(PostgreSQL)]
+        
+        API -->|SQLAlchemy ORM| DB
+    end
+    
+    Client[Cliente Externo] -->|HTTP REST| API
+    MS3[MS3 - Perfil 360°] -->|HTTP REST| API
+    
+    subgraph "Base de Datos"
+        T1[Tabla: clientes]
+        T2[Tabla: documentos_identidad]
+        T1 -->|1:N| T2
+    end
+    
+    DB --> T1
+    DB --> T2
+```
+
+## 🛠️ Tecnologías
+
+| Componente | Tecnología | Versión |
+|------------|------------|---------|
+| **Lenguaje** | Python | 3.11 |
+| **Framework** | FastAPI | 0.104.1 |
+| **ORM** | SQLAlchemy | 2.0.23 |
+| **Base de Datos** | PostgreSQL | 15 |
+| **Servidor** | Uvicorn | 0.24.0 |
+| **Validación** | Pydantic | 2.5.0 |
+| **Contenedor** | Docker | - |
 
 ## 📊 Estructura de Base de Datos
 
