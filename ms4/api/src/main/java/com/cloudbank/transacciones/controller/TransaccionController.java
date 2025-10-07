@@ -4,6 +4,10 @@ import com.cloudbank.transacciones.model.Transaccion;
 import com.cloudbank.transacciones.model.Transaccion.EstadoTransaccion;
 import com.cloudbank.transacciones.model.Transaccion.TipoTransaccion;
 import com.cloudbank.transacciones.service.TransaccionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -19,11 +23,13 @@ import java.util.Map;
 @RestController
 @RequestMapping("/")
 @CrossOrigin(origins = "*")
+@Tag(name = "Transacciones", description = "API de gestión de transacciones bancarias")
 public class TransaccionController {
 
     @Autowired
     private TransaccionService transaccionService;
 
+    @Operation(summary = "Información del servicio", tags = {"Health"})
     @GetMapping
     public ResponseEntity<Map<String, Object>> root() {
         Map<String, Object> response = new HashMap<>();
@@ -33,6 +39,10 @@ public class TransaccionController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Health check del servicio", tags = {"Health"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Servicio saludable")
+    })
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> health() {
         Map<String, String> response = new HashMap<>();
@@ -40,12 +50,18 @@ public class TransaccionController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Crear nueva transacción", description = "Crea una nueva transacción bancaria")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Transacción creada exitosamente"),
+        @ApiResponse(responseCode = "400", description = "Datos inválidos")
+    })
     @PostMapping("/transacciones")
     public ResponseEntity<Transaccion> crearTransaccion(@Valid @RequestBody Transaccion transaccion) {
         Transaccion nuevaTransaccion = transaccionService.crearTransaccion(transaccion);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaTransaccion);
     }
 
+    @Operation(summary = "Listar todas las transacciones", description = "Obtiene todas las transacciones registradas")
     @GetMapping("/transacciones")
     public ResponseEntity<List<Transaccion>> listarTransacciones() {
         List<Transaccion> transacciones = transaccionService.obtenerTodasTransacciones();

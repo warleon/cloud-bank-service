@@ -1,14 +1,60 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 8002;
 
+// Configuración de Swagger
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'MS2 - API de Cuentas Bancarias',
+            version: '1.0.0',
+            description: 'Microservicio para gestión de cuentas bancarias con MySQL',
+            contact: {
+                name: 'Cloud Bank Team'
+            }
+        },
+        servers: [
+            {
+                url: `http://localhost:${PORT}`,
+                description: 'Servidor local'
+            }
+        ],
+        tags: [
+            {
+                name: 'Health',
+                description: 'Endpoints de salud del servicio'
+            },
+            {
+                name: 'Cuentas',
+                description: 'Operaciones de cuentas bancarias'
+            },
+            {
+                name: 'Tipos de Cuenta',
+                description: 'Gestión de tipos de cuenta'
+            }
+        ]
+    },
+    apis: ['./server.js']
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Swagger UI
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'MS2 - API Cuentas'
+}));
 
 // Configuración de conexión a MySQL
 const dbConfig = {
@@ -46,7 +92,16 @@ async function initDB(retries = 5, delay = 5000) {
 
 // ============ ENDPOINTS ============
 
-// Root
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Información del servicio
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Información básica del microservicio
+ */
 app.get('/', (req, res) => {
     res.json({
         servicio: 'MS2 - Gestión de Cuentas',
@@ -55,7 +110,29 @@ app.get('/', (req, res) => {
     });
 });
 
-// Health check
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check del servicio
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Servicio saludable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: healthy
+ *                 database:
+ *                   type: string
+ *                   example: connected
+ *       503:
+ *         description: Servicio no disponible
+ */
 app.get('/health', async (req, res) => {
     try {
         await pool.query('SELECT 1');
@@ -67,7 +144,31 @@ app.get('/health', async (req, res) => {
 
 // ===== TIPOS DE CUENTA =====
 
-// Listar tipos de cuenta
+/**
+ * @swagger
+ * /tipos-cuenta:
+ *   get:
+ *     summary: Listar tipos de cuenta bancaria
+ *     tags: [Tipos de Cuenta]
+ *     responses:
+ *       200:
+ *         description: Lista de tipos de cuenta activos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   tipo_cuenta_id:
+ *                     type: integer
+ *                   nombre:
+ *                     type: string
+ *                   descripcion:
+ *                     type: string
+ *                   estado:
+ *                     type: string
+ */
 app.get('/tipos-cuenta', async (req, res) => {
     try {
         const [rows] = await pool.query(
@@ -97,6 +198,45 @@ app.get('/tipos-cuenta/:id', async (req, res) => {
 });
 
 // ===== CUENTAS =====
+
+/**
+ * @swagger
+ * /cuentas:
+ *   get:
+ *     summary: Listar todas las cuentas bancarias
+ *     tags: [Cuentas]
+ *     responses:
+ *       200:
+ *         description: Lista de cuentas bancarias
+ *   post:
+ *     summary: Crear nueva cuenta bancaria
+ *     tags: [Cuentas]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - cliente_id
+ *               - tipo_cuenta_id
+ *             properties:
+ *               cliente_id:
+ *                 type: integer
+ *               tipo_cuenta_id:
+ *                 type: integer
+ *               saldo:
+ *                 type: number
+ *                 default: 0
+ *               moneda:
+ *                 type: string
+ *                 default: PEN
+ *     responses:
+ *       201:
+ *         description: Cuenta creada exitosamente
+ *       400:
+ *         description: Error de validación
+ */
 
 // Crear cuenta
 app.post('/cuentas', async (req, res) => {
