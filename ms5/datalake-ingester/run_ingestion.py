@@ -168,4 +168,25 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import time
+    
+    # Modo: 'once' o 'continuous'
+    MODE = os.getenv('INGESTION_MODE', 'once')
+    INTERVAL_SECONDS = int(os.getenv('INGESTION_INTERVAL', '1'))
+    
+    if MODE == 'continuous':
+        logger.info(f"🔄 Modo continuo activado - Ejecutando cada {INTERVAL_SECONDS} segundo(s)")
+        while True:
+            try:
+                main()
+                logger.info(f"⏳ Esperando {INTERVAL_SECONDS} segundo(s) antes de la próxima ingesta...")
+                time.sleep(INTERVAL_SECONDS)
+            except KeyboardInterrupt:
+                logger.info("🛑 Ingesta detenida por el usuario")
+                break
+            except Exception as e:
+                logger.error(f"❌ Error en ciclo de ingesta: {e}")
+                logger.info(f"⏳ Reintentando en {INTERVAL_SECONDS} segundo(s)...")
+                time.sleep(INTERVAL_SECONDS)
+    else:
+        main()

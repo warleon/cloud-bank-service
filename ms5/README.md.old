@@ -1,418 +1,210 @@
-# MS5 - Analytics y Data Lake# MS5 - Analytics y Data Lake# MS5 - DataLake con AWS S3, Glue y Athena (ACTUALIZADO PARA EC2)
+# MS5 - Analytics y Data Lake# MS5 - DataLake con AWS S3, Glue y Athena (ACTUALIZADO PARA EC2)
 
 
 
-## 📋 Descripción
+## 📋 DescripciónArquitectura completa de DataLake desplegada en **EC2 Ubuntu 22.04** con ingesta de datos desde múltiples fuentes, catalogación con Glue y consultas analíticas vía API REST.
 
 
 
-Microservicio de analytics que consulta datos del Data Lake en AWS S3 usando AWS Athena. Proporciona dashboards ejecutivos, reportes de cuentas, análisis de transacciones y métricas de clientes a partir de datos históricos almacenados en formato Parquet.## 📋 DescripciónArquitectura completa de DataLake desplegada en **EC2 Ubuntu 22.04** con ingesta de datos desde múltiples fuentes, catalogación con Glue y consultas analíticas vía API REST.
+Microservicio de analytics que consulta datos del Data Lake en AWS S3 usando AWS Athena. Proporciona dashboards ejecutivos, reportes de cuentas, análisis de transacciones y métricas de clientes a partir de datos históricos almacenados en formato Parquet.## 🏗️ Arquitectura
 
 
-
-## 🎯 Propósito
-
-
-
-- Proporcionar analytics y KPIs para ejecutivos del bancoMicroservicio de analytics que consulta datos del Data Lake en AWS S3 usando AWS Athena. Proporciona dashboards ejecutivos, reportes de cuentas, análisis de transacciones y métricas de clientes a partir de datos históricos almacenados en formato Parquet.## 🏗️ Arquitectura
-
-- Consultar grandes volúmenes de datos históricos eficientemente
-
-- Generar reportes agregados desde el Data Lake
-
-- Servir dashboards con métricas de negocio
 
 ## 🎯 Propósito```
 
-## 🏗️ Arquitectura
-
 ┌─────────────────────────────────────────────────────────────┐
 
-```mermaid
+- Proporcionar analytics y KPIs para ejecutivos del banco│                      EC2 Ubuntu 22.04                       │
 
-graph TB- Proporcionar analytics y KPIs para ejecutivos del banco│                      EC2 Ubuntu 22.04                       │
+- Consultar grandes volúmenes de datos históricos eficientemente│  ┌──────────────────────────────────────────────────────┐   │
 
-    subgraph "MS5 - Analytics"
+- Generar reportes agregados desde el Data Lake│  │  Docker Containers (7 servicios)                     │   │
 
-        API[FastAPI Application]- Consultar grandes volúmenes de datos históricos eficientemente│  ┌──────────────────────────────────────────────────────┐   │
+- Servir dashboards con métricas de negocio│  │  ├─ MySQL 8.0         (puerto 3307)                  │   │
 
-        AC[Athena Client]
+│  │  ├─ PostgreSQL 15     (puerto 5433)                  │   │
 
-        - Generar reportes agregados desde el Data Lake│  │  Docker Containers (7 servicios)                     │   │
+## 🏗️ Arquitectura│  │  ├─ MongoDB 7.0       (puerto 27018)                 │   │
 
-        API --> AC
+│  │  ├─ Ingester MySQL    (ingesta01-mysql)              │   │
 
-    end- Servir dashboards con métricas de negocio│  │  ├─ MySQL 8.0         (puerto 3307)                  │   │
+```mermaid│  │  ├─ Ingester PostgreSQL (ingesta02-postgresql)       │   │
 
-    
+graph TB│  │  ├─ Ingester MongoDB  (ingesta03-mongodb)            │   │
 
-    Client[Dashboard/BI Tool] -->|HTTP REST| API│  │  ├─ PostgreSQL 15     (puerto 5433)                  │   │
+    subgraph "MS5 - Analytics"│  │  └─ API REST FastAPI  (puerto 8000)                  │   │
 
-    
+        API[FastAPI Application]│  └──────────────────────────────────────────────────────┘   │
 
-    AC -->|SQL Queries| Athena[AWS Athena]## 🏗️ Arquitectura│  │  ├─ MongoDB 7.0       (puerto 27018)                 │   │
+        AC[Athena Client]│                           │                                  │
 
-    Athena -->|Query Results| AC
+        └───────────────────────────┼──────────────────────────────────┘
 
-    │  │  ├─ Ingester MySQL    (ingesta01-mysql)              │   │
+        API --> AC                            │
 
-    Athena -->|Scans Data| S3[(AWS S3 Data Lake)]
+    end                            ↓ boto3 (JSON Lines)
 
-    ```mermaid│  │  ├─ Ingester PostgreSQL (ingesta02-postgresql)       │   │
+            ┌──────────────────────────────────────┐
 
-    subgraph "Data Lake Structure"
+    Client[Dashboard/BI Tool] -->|HTTP REST| API        │         Amazon S3 (3 Buckets)        │
 
-        S3 --> Clientes[/clientes/*.parquet/]graph TB│  │  ├─ Ingester MongoDB  (ingesta03-mongodb)            │   │
+            │  ├─ raw-ms1-data-bgc (MySQL)         │
 
-        S3 --> Cuentas[/cuentas/*.parquet/]
+    AC -->|SQL Queries| Athena[AWS Athena]        │  ├─ raw-ms2-data-bgc (PostgreSQL)    │
 
-        S3 --> Transacciones[/transacciones/*.parquet/]    subgraph "MS5 - Analytics"│  │  └─ API REST FastAPI  (puerto 8000)                  │   │
-
-    end
-
-            API[FastAPI Application]│  └──────────────────────────────────────────────────────┘   │
-
-    DI[Data Ingester] -->|ETL Process| S3
-
-            AC[Athena Client]│                           │                                  │
-
-    style API fill:#3498db,color:#fff
-
-    style Athena fill:#ff9900,color:#fff        └───────────────────────────┼──────────────────────────────────┘
-
-    style S3 fill:#ff9900,color:#fff
-
-```        API --> AC                            │
-
-
-
-## 🛠️ Tecnologías    end                            ↓ boto3 (JSON Lines)
-
-
-
-| Componente | Tecnología | Versión |            ┌──────────────────────────────────────┐
-
-|------------|------------|---------|
-
-| **Lenguaje** | Python | 3.11 |    Client[Dashboard/BI Tool] -->|HTTP REST| API        │         Amazon S3 (3 Buckets)        │
-
-| **Framework** | FastAPI | 0.104.1 |
-
-| **Cliente Athena** | boto3 | 1.34+ |            │  ├─ raw-ms1-data-bgc (MySQL)         │
-
-| **Formato Data Lake** | Apache Parquet | - |
-
-| **Orquestador** | AWS Glue | - |    AC -->|SQL Queries| Athena[AWS Athena]        │  ├─ raw-ms2-data-bgc (PostgreSQL)    │
-
-| **Query Engine** | AWS Athena | - |
-
-| **Storage** | AWS S3 | - |    Athena -->|Query Results| AC        │  └─ raw-ms3-data-bgc (MongoDB)       │
-
-| **Contenedor** | Docker | - |
+    Athena -->|Query Results| AC        │  └─ raw-ms3-data-bgc (MongoDB)       │
 
             └──────────────┬───────────────────────┘
 
-## 🌐 API Endpoints
-
     Athena -->|Scans Data| S3[(AWS S3 Data Lake)]                       │
-
-### Analytics y Reportes
 
                            ↓ AWS Glue Crawlers
 
-| Método | Endpoint | Descripción |
+    subgraph "Data Lake Structure"        ┌──────────────────────────────────────┐
 
-|--------|----------|-------------|    subgraph "Data Lake Structure"        ┌──────────────────────────────────────┐
+        S3 --> Clientes[/clientes/*.parquet/]        │   AWS Glue Data Catalog (9 tablas)   │
 
-| `GET` | `/dashboard-ejecutivo` | Dashboard con KPIs principales |
-
-| `GET` | `/cuentas/por-tipo` | Distribución de cuentas por tipo |        S3 --> Clientes[/clientes/*.parquet/]        │   AWS Glue Data Catalog (9 tablas)   │
-
-| `GET` | `/transacciones/por-mes` | Volumen de transacciones mensuales |
-
-| `GET` | `/clientes/activos` | Total de clientes activos |        S3 --> Cuentas[/cuentas/*.parquet/]        └──────────────┬───────────────────────┘
-
-| `GET` | `/ingresos/mensuales` | Ingresos por mantenimiento de cuentas |
+        S3 --> Cuentas[/cuentas/*.parquet/]        └──────────────┬───────────────────────┘
 
         S3 --> Transacciones[/transacciones/*.parquet/]                       │
 
-### Consultas SQL Personalizadas
-
     end                       ↓ Athena SQL Queries
 
-| Método | Endpoint | Descripción |
+            ┌──────────────────────────────────────┐
 
-|--------|----------|-------------|            ┌──────────────────────────────────────┐
+    DI[Data Ingester] -->|ETL Process| S3        │      Amazon Athena (Query Engine)    │
 
-| `POST` | `/query` | Ejecutar query SQL personalizada en Athena |
+            └──────────────┬───────────────────────┘
 
-| `GET` | `/query/{execution_id}` | Obtener resultado de query por ID |    DI[Data Ingester] -->|ETL Process| S3        │      Amazon Athena (Query Engine)    │
+    style API fill:#3498db,color:#fff                       │
 
+    style Athena fill:#ff9900,color:#fff                       ↓ API REST (15+ endpoints)
 
+    style S3 fill:#ff9900,color:#fff        ┌──────────────────────────────────────┐
 
-### Utilidades            └──────────────┬───────────────────────┘
+```        │      Usuarios/Aplicaciones           │
 
+        └──────────────────────────────────────┘
 
-
-| Método | Endpoint | Descripción |    style API fill:#3498db,color:#fff                       │
-
-|--------|----------|-------------|
-
-| `GET` | `/` | Información del servicio |    style Athena fill:#ff9900,color:#fff                       ↓ API REST (15+ endpoints)
-
-| `GET` | `/health` | Health check |
-
-| `GET` | `/docs` | Documentación Swagger UI |    style S3 fill:#ff9900,color:#fff        ┌──────────────────────────────────────┐
+## 🛠️ Tecnologías```
 
 
 
-## 📊 Modelo de Respuesta```        │      Usuarios/Aplicaciones           │
+| Componente | Tecnología | Versión |## 📁 Estructura del Proyecto
 
+|------------|------------|---------|
 
+| **Lenguaje** | Python | 3.11 |```
 
-### Dashboard Ejecutivo        └──────────────────────────────────────┘
+| **Framework** | FastAPI | 0.104.1 |cloud-m5/
 
-```json
+| **Cliente Athena** | boto3 | 1.34+ |│
 
-{## 🛠️ Tecnologías```
+| **Formato Data Lake** | Apache Parquet | - |├── docker-compose.yml         # Orquestador maestro (usa 'include')
 
-  "fecha_generacion": "2025-01-15T10:30:00",
+| **Orquestador** | AWS Glue | - |├── deploy-all.sh              # Script de despliegue para Ubuntu/Linux
 
-  "total_clientes": 15234,
+| **Query Engine** | AWS Athena | - |├── .gitignore                 # Protege .env y archivos sensibles
 
-  "clientes_activos": 14892,
+| **Storage** | AWS S3 | - |│
 
-  "total_cuentas": 28456,| Componente | Tecnología | Versión |## 📁 Estructura del Proyecto
+| **Contenedor** | Docker | - |├── ms-databases/              # 3 bases de datos de prueba
 
-  "saldo_total_sistema": 125000000.50,
+│   ├── docker-compose.yml     # MySQL, PostgreSQL, MongoDB
 
-  "transacciones_mes_actual": 45678,|------------|------------|---------|
+## 🌐 API Endpoints│   ├── .env                   # Credenciales de BD (gitignored)
 
-  "ingresos_mantenimiento": 284560.00,
+│   ├── .env.example           # Plantilla para configurar
 
-  "distribucion_cuentas": {| **Lenguaje** | Python | 3.11 |```
+### Analytics y Reportes│   ├── init-mysql.sql         # Datos de prueba MS1
 
-    "Ahorro": 18234,
-
-    "Corriente": 8123,| **Framework** | FastAPI | 0.104.1 |cloud-m5/
-
-    "Plazo Fijo": 2099
-
-  }| **Cliente Athena** | boto3 | 1.34+ |│
-
-}
-
-```| **Formato Data Lake** | Apache Parquet | - |├── docker-compose.yml         # Orquestador maestro (usa 'include')
-
-
-
-### Transacciones por Mes| **Orquestador** | AWS Glue | - |├── deploy-all.sh              # Script de despliegue para Ubuntu/Linux
-
-```json
-
-{| **Query Engine** | AWS Athena | - |├── .gitignore                 # Protege .env y archivos sensibles
-
-  "periodo": "2024-01-01 a 2024-12-31",
-
-  "data": [| **Storage** | AWS S3 | - |│
-
-    {
-
-      "mes": "2024-01",| **Contenedor** | Docker | - |├── ms-databases/              # 3 bases de datos de prueba
-
-      "total_transacciones": 3456,
-
-      "monto_total": 1250000.00│   ├── docker-compose.yml     # MySQL, PostgreSQL, MongoDB
-
-    },
-
-    {## 🌐 API Endpoints│   ├── .env                   # Credenciales de BD (gitignored)
-
-      "mes": "2024-02",
-
-      "total_transacciones": 3789,│   ├── .env.example           # Plantilla para configurar
-
-      "monto_total": 1380000.00
-
-    }### Analytics y Reportes│   ├── init-mysql.sql         # Datos de prueba MS1
-
-  ]
-
-}│   ├── init-postgres.sql      # Datos de prueba MS2
-
-```
+│   ├── init-postgres.sql      # Datos de prueba MS2
 
 | Método | Endpoint | Descripción |│   ├── init-mongo.js          # Datos de prueba MS3
 
-## 📊 Estructura del Data Lake
-
 |--------|----------|-------------|│   └── README.md              # Documentación detallada
-
-**S3 Bucket**: `s3://cloud-bank-datalake/`
 
 | `GET` | `/dashboard-ejecutivo` | Dashboard con KPIs principales |│
 
-**Estructura de Directorios:**
+| `GET` | `/cuentas/por-tipo` | Distribución de cuentas por tipo |├── datalake-ingester/         # ETL: Extrae y sube a S3
 
-```| `GET` | `/cuentas/por-tipo` | Distribución de cuentas por tipo |├── datalake-ingester/         # ETL: Extrae y sube a S3
+| `GET` | `/transacciones/por-mes` | Volumen de transacciones mensuales |│   ├── docker-compose.yml     # 3 ingesters (uno por DB)
 
-s3://cloud-bank-datalake/
+| `GET` | `/clientes/activos` | Total de clientes activos |│   ├── ingester.py            # Lógica de ingesta (boto3)
 
-├── clientes/| `GET` | `/transacciones/por-mes` | Volumen de transacciones mensuales |│   ├── docker-compose.yml     # 3 ingesters (uno por DB)
+| `GET` | `/ingresos/mensuales` | Ingresos por mantenimiento de cuentas |│   ├── .env                   # AWS credentials + S3 buckets
 
-│   ├── clientes.parquet
+│   ├── .env.example           # Plantilla
 
-│   └── _metadata| `GET` | `/clientes/activos` | Total de clientes activos |│   ├── ingester.py            # Lógica de ingesta (boto3)
+### Consultas SQL Personalizadas│   ├── requirements.txt       # boto3, pymysql, psycopg2, pymongo
 
-├── cuentas/
+│   └── README.md              # Documentación ETL
 
-│   ├── cuentas.parquet| `GET` | `/ingresos/mensuales` | Ingresos por mantenimiento de cuentas |│   ├── .env                   # AWS credentials + S3 buckets
-
-│   └── _metadata
-
-└── transacciones/│   ├── .env.example           # Plantilla
-
-    ├── year=2024/
-
-    │   ├── month=01/### Consultas SQL Personalizadas│   ├── requirements.txt       # boto3, pymysql, psycopg2, pymongo
-
-    │   │   └── transacciones.parquet
-
-    │   ├── month=02/│   └── README.md              # Documentación ETL
-
-    │   │   └── transacciones.parquet
-
-    └── _metadata| Método | Endpoint | Descripción |│
-
-```
+| Método | Endpoint | Descripción |│
 
 |--------|----------|-------------|└── api-consultas/             # API REST con FastAPI
 
-**AWS Glue Tables:**
+| `POST` | `/query` | Ejecutar query SQL personalizada en Athena |    ├── docker-compose.yml     # Servicio API (puerto 8000)
 
-- `cloud_bank_db.clientes`| `POST` | `/query` | Ejecutar query SQL personalizada en Athena |    ├── docker-compose.yml     # Servicio API (puerto 8000)
+| `GET` | `/query/{execution_id}` | Obtener resultado de query por ID |    ├── main.py                # Endpoints de FastAPI
 
-- `cloud_bank_db.cuentas`
+    ├── athena_client.py       # Cliente para consultas Athena
 
-- `cloud_bank_db.transacciones`| `GET` | `/query/{execution_id}` | Obtener resultado de query por ID |    ├── main.py                # Endpoints de FastAPI
+### Utilidades    ├── queries.py             # Queries SQL predefinidas
 
+    ├── .env                   # AWS credentials + config Athena
 
-
-## ☁️ Servicios AWS Utilizados    ├── athena_client.py       # Cliente para consultas Athena
-
-
-
-- **EC2**: Hospedaje de la API### Utilidades    ├── queries.py             # Queries SQL predefinidas
-
-- **S3**: Almacenamiento del Data Lake (formato Parquet)
-
-- **Athena**: Motor de consultas SQL sobre S3    ├── .env                   # AWS credentials + config Athena
-
-- **Glue**: Catálogo de datos y crawler
-
-- **IAM**: Permisos para acceso a S3/Athena| Método | Endpoint | Descripción |    ├── .env.example           # Plantilla
-
-- **VPC & Security Groups**: Red y firewall
+| Método | Endpoint | Descripción |    ├── .env.example           # Plantilla
 
 |--------|----------|-------------|    ├── requirements.txt       # fastapi, boto3, uvicorn
 
-## 🚀 Despliegue Rápido
-
 | `GET` | `/` | Información del servicio |    ├── DataLake_API_Postman_Collection.json  # 16 requests
 
-```bash
-
-# En la instancia EC2| `GET` | `/health` | Health check |    └── README.md              # Documentación API con endpoints
-
-cd ~/cloud-bank-service/ms5/api-consultas
+| `GET` | `/health` | Health check |    └── README.md              # Documentación API con endpoints
 
 | `GET` | `/docs` | Documentación Swagger UI |```
 
-# Configurar AWS credentials y S3 bucket en .env
-
-# AWS_ACCESS_KEY_ID=AKIA...
-
-# AWS_SECRET_ACCESS_KEY=...
-
-# AWS_REGION=us-east-1## 📊 Modelo de Respuesta## � Arquitectura de Redes Docker
-
-# S3_BUCKET=cloud-bank-datalake
 
 
+## 📊 Modelo de Respuesta## � Arquitectura de Redes Docker
 
-docker-compose up -d
+
 
 ### Dashboard Ejecutivo### Conectividad Entre Componentes
 
-# Verificar
+```json
 
-curl http://localhost:8000/health```json
+{```
 
-curl http://localhost:8000/docs
+  "fecha_generacion": "2025-01-15T10:30:00",┌─────────────────────────────────────────────────┐
 
-```{```
+  "total_clientes": 15234,│          Red: datalake-network                  │
 
+  "clientes_activos": 14892,│          (Comunicación interna)                 │
 
-
-Ver guía completa: `../docs/DEPLOYMENT_GUIDE.md`  "fecha_generacion": "2025-01-15T10:30:00",┌─────────────────────────────────────────────────┐
-
-
-
-## 🔗 Dependencias  "total_clientes": 15234,│          Red: datalake-network                  │
-
-
-
-**Consumido por:**  "clientes_activos": 14892,│          (Comunicación interna)                 │
-
-- Dashboards ejecutivos
-
-- Herramientas de BI (Tableau, Power BI, etc.)  "total_cuentas": 28456,│                                                 │
-
-- Reportes programados
+  "total_cuentas": 28456,│                                                 │
 
   "saldo_total_sistema": 125000000.50,│  ┌──────────┐  ┌───────────┐  ┌──────────┐    │
 
-**Consume:**
+  "transacciones_mes_actual": 45678,│  │ MySQL    │  │PostgreSQL │  │ MongoDB  │    │
 
-- AWS S3 (Data Lake)  "transacciones_mes_actual": 45678,│  │ MySQL    │  │PostgreSQL │  │ MongoDB  │    │
+  "ingresos_mantenimiento": 284560.00,│  │ :3306    │  │  :5432    │  │ :27017   │    │
 
-- AWS Athena (Query Engine)
+  "distribucion_cuentas": {│  └──────────┘  └───────────┘  └──────────┘    │
 
-- Datos históricos de MS1, MS2, MS4 (a través del Data Lake)  "ingresos_mantenimiento": 284560.00,│  │ :3306    │  │  :5432    │  │ :27017   │    │
+    "Ahorro": 18234,│       ↑              ↑              ↑          │
 
+    "Corriente": 8123,│       │   Conexión directa via    │          │
 
+    "Plazo Fijo": 2099│       │   nombres de contenedores  │          │
 
-## 📖 Documentación Adicional  "distribucion_cuentas": {│  └──────────┘  └───────────┘  └──────────┘    │
+  }│       └──────────────┴──────────────┘          │
 
+}│                      │                         │
 
+```│           ┌──────────────────────┐             │
 
-- **Swagger UI**: `http://{EC2-IP}:8000/docs`    "Ahorro": 18234,│       ↑              ↑              ↑          │
-
-- **OpenAPI Spec**: `http://{EC2-IP}:8000/openapi.json`
-
-- **Data Lake Setup**: Ver `check_s3_structure.sh`, `check_glue_tables.py`    "Corriente": 8123,│       │   Conexión directa via    │          │
-
-- **Ingester**: Ver `datalake-ingester/README.md`
-
-- **Guía de deployment detallada**: Ver `../docs/DEPLOYMENT_GUIDE.md`    "Plazo Fijo": 2099│       │   nombres de contenedores  │          │
-
-
-
-## 📝 Notas  }│       └──────────────┴──────────────┘          │
-
-
-
-- Las consultas en Athena escanean datos en S3, se cobra por TB escaneado}│                      │                         │
-
-- El formato Parquet optimiza el escaneo (columnar, comprimido)
-
-- Los datos se particionan por año/mes para eficiencia```│           ┌──────────────────────┐             │
-
-- El Data Ingester corre periódicamente para actualizar el Data Lake
-
-- Athena queries son asíncronas (se obtiene execution_id para consultar resultado)│           │  Ingester Containers │             │
-
-- Se recomienda usar vistas materializadas para dashboards de actualización frecuente
+│           │  Ingester Containers │             │
 
 ### Transacciones por Mes│           │  - ingesta01-mysql   │             │
 

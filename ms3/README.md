@@ -1,191 +1,176 @@
-# MS3 - Servicio de Perfil Completo del Cliente (Vista 360°)
+# MS3 - Vista 360° del Cliente (Perfil Completo)
 
-## Descripción
-Microservicio sin base de datos que agrega información completa de un cliente específico desde MS1 (PostgreSQL), MS2 (MySQL) y MS4 (MongoDB), presentándola de forma unificada para empleados del banco.
+## 📋 Descripción
 
-## Características
-- ✅ **Stateless**: No tiene base de datos propia
-- 🔄 **Agregador**: Consume datos de MS1, MS2 y MS4
-- 🎯 **Vista 360°**: Información completa del cliente en un solo lugar
-- 🚀 **FastAPI**: API REST moderna y rápida
-- 🐳 **Dockerizado**: Listo para desplegar en EC2
+Microservicio agregador **sin base de datos propia** que integra información de múltiples microservicios (MS1, MS2, MS4) para proporcionar una vista completa y unificada del perfil de un cliente bancario. Diseñado para empleados del banco que necesitan acceso rápido a toda la información del cliente.
 
-## Tecnologías
-- **Python 3.11**
-- **FastAPI** - Framework web
-- **httpx** - Cliente HTTP asíncrono
-- **Pydantic** - Validación de datos
-- **uvicorn** - Servidor ASGI
+## 🎯 Propósito
 
-## Endpoints
+- Proporcionar vista 360° del cliente en una sola llamada API
+- Agregar datos de clientes, cuentas y transacciones
+- Servir como Backend for Frontend (BFF) para aplicaciones internas
+- Optimizar consultas evitando múltiples llamadas desde el frontend
 
-### 1. Perfil Completo del Cliente
-```http
-GET /api/clientes/{cliente_id}/perfil-completo
-```
-Devuelve:
-- Información personal (MS1)
-- Todas las cuentas (MS2)
-- Historial de transacciones (MS4)
-- Resumen financiero calculado
+## 🏗️ Arquitectura
 
-### 2. Buscar Clientes
-```http
-GET /api/clientes/buscar?q=Juan
-```
-Busca clientes por nombre, email o documento.
-
-### 3. Health Check
-```http
-GET /health
-```
-Verifica el estado del servicio y la conectividad con otros microservicios.
-
-## Variables de Entorno
-
-```env
-# URLs de otros microservicios
-MS1_URL=http://18.212.214.255:5000
-MS2_URL=http://54.242.189.131:3000
-MS4_URL=http://54.87.40.69:8080
-
-# Configuración del servidor
-PORT=6000
-LOG_LEVEL=INFO
+```mermaid
+graph TB
+    subgraph "MS3 - Vista 360°"
+        API[FastAPI Application]
+        AGG[Aggregation Logic]
+        
+        API --> AGG
+    end
+    
+    Client[Cliente Web/Móvil] -->|HTTP REST| API
+    
+    AGG -->|GET /clientes/{id}| MS1[MS1 - Clientes]
+    AGG -->|GET /cuentas/cliente/{id}| MS2[MS2 - Cuentas]
+    AGG -->|GET /transacciones/cuenta/{id}| MS4[MS4 - Transacciones]
+    
+    MS1 -->|Datos Cliente + Documentos| AGG
+    MS2 -->|Cuentas + Tipos| AGG
+    MS4 -->|Transacciones| AGG
+    
+    AGG -->|Respuesta Agregada| API
+    
+    style API fill:#9b59b6,color:#fff
+    style AGG fill:#8e44ad,color:#fff
 ```
 
-## Ejecución Local
+## 🛠️ Tecnologías
 
-### Con Docker
-```bash
-docker-compose up -d
-```
+| Componente | Tecnología | Versión |
+|------------|------------|---------|
+| **Lenguaje** | Python | 3.11 |
+| **Framework** | FastAPI | 0.104.1 |
+| **Cliente HTTP** | httpx | 0.25.1 |
+| **Servidor** | Uvicorn | 0.24.0 |
+| **Validación** | Pydantic | 2.5.0 |
+| **Contenedor** | Docker | - |
 
-### Sin Docker
-```bash
-# Instalar dependencias
-pip install -r requirements.txt
+## 🌐 API Endpoints
 
-# Configurar variables de entorno
-export MS1_URL=http://localhost:5000
-export MS2_URL=http://localhost:3000
-export MS4_URL=http://localhost:8080
+### Perfil del Cliente
 
-# Ejecutar
-python api/main.py
-```
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/api/clientes/{cliente_id}/perfil-completo` | Vista 360° con toda la información del cliente |
+| `GET` | `/api/clientes/buscar?q={query}` | Buscar clientes por nombre, email o documento |
 
-## Despliegue en EC2
+### Utilidades
 
-```bash
-# 1. Clonar repositorio
-git clone https://github.com/Br4yanGC/cloud-bank-service.git
-cd cloud-bank-service/ms3
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/` | Información del servicio |
+| `GET` | `/health` | Health check con estado de MS1, MS2, MS4 |
+| `GET` | `/docs` | Documentación Swagger UI |
 
-# 2. Configurar variables de entorno
-nano .env
+## 📊 Modelo de Respuesta Agregada
 
-# 3. Levantar contenedor
-docker-compose up -d
-
-# 4. Verificar logs
-docker-compose logs -f
-
-# 5. Probar endpoint
-curl http://localhost:6000/health
-```
-
-## Arquitectura
-
-```
-┌─────────────────────────────────────────┐
-│              MS3 API                    │
-│         (FastAPI - Puerto 6000)         │
-│                                         │
-│  ┌───────────────────────────────────┐ │
-│  │   Endpoint: perfil-completo       │ │
-│  └───────────────────────────────────┘ │
-│             ↓  ↓  ↓                     │
-│      ┌──────┴──┴──┴──────┐             │
-│      │  HTTP Clients     │             │
-│      │  (httpx async)    │             │
-│      └──────┬──┬──┬──────┘             │
-└─────────────┼──┼──┼────────────────────┘
-              │  │  │
-    ┌─────────┘  │  └─────────┐
-    ↓            ↓             ↓
-  MS1 API     MS2 API      MS4 API
-(PostgreSQL)  (MySQL)     (MongoDB)
-```
-
-## Ejemplo de Respuesta
-
+### Perfil Completo del Cliente
 ```json
 {
   "cliente": {
     "cliente_id": 1,
     "nombre": "Juan",
     "apellido": "Pérez",
-    "email": "juan@example.com",
+    "email": "juan.perez@example.com",
     "telefono": "+51999888777",
-    "fecha_registro": "2024-01-15T10:30:00",
     "estado": "activo",
-    "documento": {
-      "tipo": "DNI",
-      "numero": "12345678"
-    }
+    "documentos": [
+      {
+        "tipo_documento": "DNI",
+        "numero_documento": "12345678"
+      }
+    ]
   },
   "cuentas": [
     {
-      "cuenta_id": 3,
+      "cuenta_id": 1,
       "numero_cuenta": "1234567890",
-      "tipo_cuenta": "Cuenta de Ahorro",
-      "saldo": 15000.00,
-      "moneda": "PEN",
-      "fecha_apertura": "2024-01-20",
+      "tipo_cuenta": "Cuenta de Ahorros",
+      "saldo": 15000.50,
+      "moneda": "USD",
       "estado": "activa"
     }
   ],
   "transacciones_recientes": [
     {
-      "transaccionId": 45,
-      "tipo": "DEPOSITO",
+      "transaccion_id": "...",
+      "tipo": "transferencia",
       "monto": 500.00,
-      "fecha": "2024-10-05T10:30:00",
-      "estado": "completada",
-      "descripcion": "Depósito en efectivo"
+      "fecha": "2025-01-15T14:30:00"
     }
   ],
-  "resumen_financiero": {
-    "patrimonio_total": 15000.00,
-    "moneda": "PEN",
-    "total_cuentas": 1,
-    "total_transacciones": 8,
-    "ultima_actividad": "2024-10-05T10:30:00"
+  "resumen": {
+    "total_cuentas": 2,
+    "saldo_total": 25000.50,
+    "ultima_transaccion": "2025-01-15T14:30:00"
   }
 }
 ```
 
-## Mantenimiento
+## 📊 Estructura de Datos
 
-### Ver logs
+**Sin Base de Datos Propia**
+- Este microservicio NO tiene base de datos
+- Consume datos en tiempo real de otros microservicios
+- Caché opcional puede agregarse para optimización futura
+
+**Fuentes de Datos:**
+1. **MS1 (PostgreSQL)**: Datos del cliente y documentos
+2. **MS2 (MySQL)**: Cuentas y tipos de cuenta
+3. **MS4 (MongoDB)**: Transacciones bancarias
+
+## ☁️ Servicios AWS Utilizados
+
+- **EC2**: Hospedaje del contenedor
+- **VPC & Security Groups**: Red y firewall (comunicación con MS1, MS2, MS4)
+- **IAM**: Gestión de permisos
+
+## 🚀 Despliegue Rápido
+
 ```bash
-docker-compose logs -f
+# En la instancia EC2
+cd ~/cloud-bank-service/ms3
+
+# Configurar IPs de otros microservicios en .env
+# MS1_URL=http://54.167.116.254:8001
+# MS2_URL=http://54.242.68.197:8002
+# MS4_URL=http://52.90.2.132:8004
+
+docker-compose up -d
+
+# Verificar
+curl http://localhost:6000/health
+curl http://localhost:6000/docs
 ```
 
-### Reiniciar servicio
-```bash
-docker-compose restart
-```
+Ver guía completa: `../docs/DEPLOYMENT_GUIDE.md`
 
-### Actualizar código
-```bash
-git pull origin main
-docker-compose down
-docker-compose up -d --build
-```
+## 🔗 Dependencias
 
-## Notas
-- ⚠️ Este servicio depende de MS1, MS2 y MS4. Asegúrate de que estén corriendo.
-- ⏱️ Los tiempos de respuesta dependen de la velocidad de los otros microservicios.
-- 🔒 En producción, considera agregar autenticación/autorización.
+**Consumido por:**
+- Frontend React (AWS Amplify)
+- Aplicaciones internas del banco
+
+**Consume:**
+- MS1 (Clientes)
+- MS2 (Cuentas)
+- MS4 (Transacciones)
+
+## 📖 Documentación Adicional
+
+- **Swagger UI**: `http://{EC2-IP}:6000/docs`
+- **OpenAPI Spec**: `http://{EC2-IP}:6000/openapi.json`
+- **Integración con Frontend**: Ver `../frontend/README.md`
+- **Guía de deployment detallada**: Ver `../docs/DEPLOYMENT_GUIDE.md`
+
+## 📝 Notas
+
+- **Stateless**: No mantiene estado, ideal para escalamiento horizontal
+- **Resiliencia**: Si un MS falla, devuelve datos parciales con campo `error`
+- **Health Check**: Muestra estado de conectividad con MS1, MS2, MS4
+- **Timeout**: 10 segundos por llamada a cada microservicio
+- **CORS**: Configurado para aceptar requests del frontend en Amplify

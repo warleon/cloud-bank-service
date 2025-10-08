@@ -47,167 +47,155 @@ graph TB
 | **Validación** | Pydantic | 2.5.0 |
 | **Contenedor** | Docker | - |
 
+## 🌐 API Endpoints
+
+### Clientes
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/clientes` | Listar todos los clientes |
+| `GET` | `/clientes/{id}` | Obtener cliente por ID |
+| `GET` | `/clientes/email/{email}` | Buscar por email |
+| `GET` | `/clientes/documento/{numero}` | Buscar por documento |
+| `POST` | `/clientes` | Crear nuevo cliente |
+| `PUT` | `/clientes/{id}` | Actualizar cliente |
+| `DELETE` | `/clientes/{id}` | Eliminar cliente |
+
+### Documentos
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/clientes/{id}/documentos` | Listar documentos del cliente |
+| `POST` | `/clientes/{id}/documentos` | Agregar documento |
+
+### Utilidades
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/` | Información del servicio |
+| `GET` | `/health` | Health check |
+| `GET` | `/docs` | Documentación Swagger UI |
+
+## 📊 Modelo de Datos
+
+### Cliente
+```json
+{
+  "cliente_id": 1,
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "email": "juan.perez@example.com",
+  "telefono": "+51999888777",
+  "fecha_registro": "2025-01-15T10:30:00",
+  "estado": "activo",
+  "documentos": [...]
+}
+```
+
+### Documento de Identidad
+```json
+{
+  "documento_id": 1,
+  "cliente_id": 1,
+  "tipo_documento": "DNI",
+  "numero_documento": "12345678",
+  "fecha_emision": "2020-01-01",
+  "fecha_vencimiento": "2030-01-01"
+}
+```
+
 ## 📊 Estructura de Base de Datos
 
-### Tabla: `clientes`
+**Tabla `clientes`:**
 - `cliente_id` (PK, SERIAL)
-- `nombre` (VARCHAR)
-- `apellido` (VARCHAR)
+- `nombre`, `apellido` (VARCHAR)
 - `email` (VARCHAR, UNIQUE)
 - `telefono` (VARCHAR)
 - `fecha_registro` (TIMESTAMP)
 - `estado` (VARCHAR)
 
-### Tabla: `documentos_identidad`
+**Tabla `documentos_identidad`:**
 - `documento_id` (PK, SERIAL)
-- `cliente_id` (FK → clientes)
+- `cliente_id` (FK → clientes) - **Relación 1:N**
 - `tipo_documento` (VARCHAR)
-- `numero_documento` (VARCHAR, UNIQUE)
-- `fecha_emision` (DATE)
-- `fecha_vencimiento` (DATE)
+- `numero_documento` (VARCHAR)
+- `fecha_emision`, `fecha_vencimiento` (DATE)
 
-## 🚀 Despliegue en EC2
+## ☁️ Servicios AWS Utilizados
 
-### 1. Lanzar instancia EC2
+- **EC2**: Hospedaje del contenedor
+- **VPC & Security Groups**: Red y firewall
+- **IAM**: Gestión de permisos
+
+## 🚀 Despliegue Rápido
+
 ```bash
-# AMI: Ubuntu Server 22.04 LTS
-# Tipo: t2.small (mínimo)
-# Security Group: Permitir puertos 22, 8001, 5432
-```
-
-### 2. Conectar a EC2 e instalar Docker
-```bash
-ssh -i tu-key.pem ubuntu@<EC2-IP>
-
-# Instalar Docker
-sudo apt update
-sudo apt install -y docker.io docker-compose
-sudo usermod -aG docker ubuntu
-sudo systemctl enable docker
-sudo systemctl start docker
-
-# Cerrar sesión y volver a conectar
-exit
-ssh -i tu-key.pem ubuntu@<EC2-IP>
-```
-
-### 3. Clonar repositorio y desplegar
-```bash
-git clone https://github.com/Br4yanGC/cloud-bank-service.git
-cd cloud-bank-service/ms1
-
-# Levantar servicios
+# En la instancia EC2
+cd ~/cloud-bank-service/ms1
 docker-compose up -d
 
-# Ver logs
-docker-compose logs -f
+# Verificar
+curl http://localhost:8001/health
+curl http://localhost:8001/docs
 ```
 
-## 📝 API Endpoints
+Ver guía completa: `../docs/DEPLOYMENT_GUIDE.md`
 
-### Health Check
-```bash
-GET http://<EC2-IP>:8001/
-GET http://<EC2-IP>:8001/health
-```
+## 🔗 Dependencias
 
-### Clientes
+**Consumido por:**
+- MS3 (Perfil Cliente 360°)
 
-**Crear Cliente**
-```bash
-POST http://<EC2-IP>:8001/clientes
-Content-Type: application/json
+**Consume:**
+- Ninguno (microservicio base)
 
-{
-  "nombre": "Juan",
-  "apellido": "Pérez",
-  "email": "juan.perez@email.com",
-  "telefono": "999888777",
-  "estado": "activo",
-  "documento": {
-    "tipo_documento": "DNI",
-    "numero_documento": "12345678",
-    "fecha_emision": "2020-01-15",
-    "fecha_vencimiento": "2030-01-15"
-  }
-}
-```
+## � Datos de Prueba
 
-**Listar Clientes**
-```bash
-GET http://<EC2-IP>:8001/clientes
-```
+El microservicio cuenta con **10,000 clientes** generados automáticamente usando la biblioteca **Faker** (Python):
 
-**Obtener Cliente por ID**
-```bash
-GET http://<EC2-IP>:8001/clientes/1
-```
+### Características de los Datos
 
-**Obtener Cliente por Email**
-```bash
-GET http://<EC2-IP>:8001/clientes/email/juan.perez@email.com
-```
+| Métrica | Valor |
+|---------|-------|
+| **Total Clientes** | 10,000 |
+| **Generador** | Faker (locale: es_PE) |
+| **Estados** | 70% activos, 20% inactivos, 10% suspendidos |
+| **Documentos DNI** | 6,000 (60%) |
+| **Pasaportes** | 2,500 (25%) |
+| **Carnet Extranjería** | 1,500 (15%) |
+| **Emails únicos** | 10,000 (sin duplicados) |
 
-**Obtener Cliente por Documento**
-```bash
-GET http://<EC2-IP>:8001/clientes/documento/12345678
-```
-
-**Actualizar Cliente**
-```bash
-PUT http://<EC2-IP>:8001/clientes/1
-Content-Type: application/json
-
-{
-  "nombre": "Juan Carlos",
-  "apellido": "Pérez",
-  "email": "juan.perez@email.com",
-  "telefono": "999888777",
-  "estado": "activo"
-}
-```
-
-**Eliminar Cliente**
-```bash
-DELETE http://<EC2-IP>:8001/clientes/1
-```
-
-## 🧪 Pruebas Locales
+### Script de Generación
 
 ```bash
-# Levantar servicios
-docker-compose up -d
+# Ejecutar generador de datos
+cd ~/cloud-bank-service/ms1
+python scripts/generate_fake_data.py --records 10000
 
-# Probar API
-curl http://localhost:8001/
-curl http://localhost:8001/clientes
-
-# Ver logs
-docker-compose logs -f api-clientes
-
-# Detener servicios
-docker-compose down
+# Verificar registros
+curl http://localhost:8001/clientes | jq 'length'
 ```
 
-## 🐳 Docker Hub
+### Distribución de Datos
 
-### Build y Push
-```bash
-cd api
-docker build -t br4yangc/cloud-bank-ms1:api-clientes .
-docker push br4yangc/cloud-bank-ms1:api-clientes
-```
+- **Nombres**: Realistas para Perú (uso de Faker locale ES-PE)
+- **Emails**: Dominios variados (@gmail.com, @hotmail.com, @yahoo.com, etc.)
+- **Teléfonos**: Formato peruano (+51 9XX XXX XXX)
+- **Fecha de Registro**: Distribuidos en los últimos 5 años
+- **Estados**: Weighted random (70/20/10)
 
-## 🔧 Variables de Entorno
+## �📖 Documentación Adicional
 
-- `DATABASE_URL`: postgresql://admin:admin123@postgres-db:5432/clientes_db
-- `PORT`: 8001
+- **Swagger UI**: `http://{EC2-IP}:8001/docs` ✅
+- **OpenAPI Spec**: `http://{EC2-IP}:8001/openapi.json`
+- **Esquemas de BD completos**: Ver `../docs/DATABASE_SCHEMAS.md`
+- **Ejemplos de API avanzados**: Ver `../docs/API_EXAMPLES.md`
+- **Guía de deployment detallada**: Ver `../docs/DEPLOYMENT_GUIDE.md`
 
-## 📦 Dependencias Python
+## 📝 Notas
 
-- fastapi==0.104.1
-- uvicorn==0.24.0
-- psycopg2-binary==2.9.9
-- sqlalchemy==2.0.23
-- pydantic==2.5.0
-- python-dotenv==1.0.0
+- Las operaciones DELETE realizan eliminación en cascada de documentos
+- El email debe ser único por cliente
+- El estado por defecto es "activo"
+- Soporta reintentos automáticos de conexión a PostgreSQL (5 intentos, 5s entre cada uno)
+- Base de datos contiene 10,000 registros de prueba para testing y demos

@@ -6,7 +6,7 @@ Crear un API Gateway en AWS para MS3 que permita acceso público HTTPS con CORS 
 ## 📋 Pasos de Configuración
 
 ### 1. Acceder a API Gateway Console
-1. Ir a **AWS Console** → Buscar **API Gateway**
+1. Ir a **AWS Console** → Buscar **API <Gateway**
 2. Click en **Create API**
 3. Seleccionar **HTTP API** (no REST API)
 4. Click en **Build**

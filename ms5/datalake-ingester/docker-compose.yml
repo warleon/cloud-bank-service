@@ -36,7 +36,12 @@
       
       # Logging
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      
+      # Ingestion Mode: 'once' or 'continuous'
+      - INGESTION_MODE=${INGESTION_MODE:-once}
+      - INGESTION_INTERVAL=${INGESTION_INTERVAL:-1}
     command: python run_ingestion.py
+    restart: unless-stopped
     networks:
       - datalake-network
 

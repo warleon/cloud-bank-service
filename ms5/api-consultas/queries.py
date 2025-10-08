@@ -172,7 +172,7 @@ PREDEFINED_QUERIES = {
     "dashboard_ejecutivo": """
         SELECT 
             'Total Clientes' as metrica,
-            CAST(COUNT(*) AS VARCHAR) as valor,
+            CAST(COUNT(DISTINCT cliente_id) AS VARCHAR) as valor,
             'clientes' as categoria
         FROM cloud_bank_db.ms1_ms1_clientes
         
@@ -180,7 +180,7 @@ PREDEFINED_QUERIES = {
         
         SELECT 
             'Total Cuentas' as metrica,
-            CAST(COUNT(*) AS VARCHAR) as valor,
+            CAST(COUNT(DISTINCT cuenta_id) AS VARCHAR) as valor,
             'cuentas' as categoria
         FROM cloud_bank_db.ms2_ms2_cuentas
         
@@ -188,15 +188,16 @@ PREDEFINED_QUERIES = {
         
         SELECT 
             'Saldo Total Banco' as metrica,
-            CAST(ROUND(SUM(saldo), 2) AS VARCHAR) as valor,
+            CAST(ROUND(SUM(CAST(saldo AS DOUBLE)), 2) AS VARCHAR) as valor,
             'cuentas' as categoria
         FROM cloud_bank_db.ms2_ms2_cuentas
+        WHERE saldo IS NOT NULL
         
         UNION ALL
         
         SELECT 
             'Total Transacciones' as metrica,
-            CAST(COUNT(*) AS VARCHAR) as valor,
+            CAST(COUNT(DISTINCT transaccionid) AS VARCHAR) as valor,
             'transacciones' as categoria
         FROM cloud_bank_db.ms4_ms4_transacciones
         
@@ -204,9 +205,10 @@ PREDEFINED_QUERIES = {
         
         SELECT 
             'Volumen Transaccional' as metrica,
-            CAST(ROUND(SUM(monto), 2) AS VARCHAR) as valor,
+            CAST(ROUND(SUM(CAST(monto AS DOUBLE)), 2) AS VARCHAR) as valor,
             'transacciones' as categoria
         FROM cloud_bank_db.ms4_ms4_transacciones
+        WHERE monto IS NOT NULL
         
         UNION ALL
         
