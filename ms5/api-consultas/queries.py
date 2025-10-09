@@ -10,6 +10,9 @@ PREDEFINED_QUERIES = {
             COUNT(CASE WHEN estado = 'activo' THEN 1 END) as clientes_activos,
             COUNT(CASE WHEN estado = 'inactivo' THEN 1 END) as clientes_inactivos
         FROM cloud_bank_db.ms1_ms1_clientes
+        WHERE year = '2025'
+          AND month = '10'
+          AND day = '08'
     """,
     
     
@@ -26,6 +29,12 @@ PREDEFINED_QUERIES = {
         FROM cloud_bank_db.ms1_ms1_clientes c
         LEFT JOIN cloud_bank_db.ms1_ms1_documentos_identidad d 
             ON c.cliente_id = d.cliente_id
+            AND d.year = '2025'
+            AND d.month = '10'
+            AND d.day = '08'
+        WHERE c.year = '2025'
+          AND c.month = '10'
+          AND c.day = '08'
         ORDER BY c.fecha_registro DESC
         LIMIT {limit}
     """,
@@ -39,6 +48,9 @@ PREDEFINED_QUERIES = {
             MIN(saldo) as saldo_minimo,
             MAX(saldo) as saldo_maximo
         FROM cloud_bank_db.ms2_ms2_cuentas
+        WHERE year = '2025'
+          AND month = '10'
+          AND day = '08'
     """,
     
     "cuentas_por_tipo": """
@@ -52,6 +64,9 @@ PREDEFINED_QUERIES = {
         FROM cloud_bank_db.ms2_ms2_tipos_cuenta t
         LEFT JOIN cloud_bank_db.ms2_ms2_cuentas c 
             ON t.tipo_cuenta_id = c.tipo_cuenta_id
+            AND c.year = '2025'
+            AND c.month = '10'
+            AND c.day = '08'
         GROUP BY t.nombre, t.descripcion
         ORDER BY saldo_total DESC
     """,
@@ -71,6 +86,12 @@ PREDEFINED_QUERIES = {
             ON c.cliente_id = cli.cliente_id
         JOIN cloud_bank_db.ms2_ms2_tipos_cuenta t 
             ON c.tipo_cuenta_id = t.tipo_cuenta_id
+        WHERE c.year = '2025'
+          AND c.month = '10'
+          AND c.day = '08'
+          AND cli.year = '2025'
+          AND cli.month = '10'
+          AND cli.day = '08'
         ORDER BY CAST(c.saldo AS DOUBLE) DESC
         LIMIT {limit}
     """,
@@ -86,6 +107,12 @@ PREDEFINED_QUERIES = {
         FROM cloud_bank_db.ms1_ms1_clientes cli
         LEFT JOIN cloud_bank_db.ms2_ms2_cuentas c 
             ON cli.cliente_id = c.cliente_id
+            AND c.year = '2025'
+            AND c.month = '10'
+            AND c.day = '08'
+        WHERE cli.year = '2025'
+          AND cli.month = '10'
+          AND cli.day = '08'
         GROUP BY cli.cliente_id, cli.nombre, cli.apellido, cli.email
         ORDER BY saldo_total DESC
         LIMIT {limit}
@@ -101,6 +128,9 @@ PREDEFINED_QUERIES = {
             MAX(CAST(monto AS DOUBLE)) as monto_maximo,
             'PEN' as moneda
         FROM cloud_bank_db.ms4_ms4_transacciones
+        WHERE year = '2025'
+          AND month = '10'
+          AND day = '08'
     """,
     
     "transacciones_por_tipo": """
@@ -111,6 +141,9 @@ PREDEFINED_QUERIES = {
             AVG(CAST(monto AS DOUBLE)) as monto_promedio,
             'PEN' as moneda
         FROM cloud_bank_db.ms4_ms4_transacciones
+        WHERE year = '2025'
+          AND month = '10'
+          AND day = '08'
         GROUP BY tipo
         ORDER BY monto_total DESC
     """,
@@ -122,6 +155,9 @@ PREDEFINED_QUERIES = {
             SUM(monto) as monto_total,
             AVG(monto) as monto_promedio
         FROM cloud_bank_db.ms4_ms4_transacciones
+        WHERE year = '2025'
+          AND month = '10'
+          AND day = '08'
         GROUP BY estado
         ORDER BY cantidad_transacciones DESC
     """,
@@ -137,6 +173,9 @@ PREDEFINED_QUERIES = {
             cuentaorigenid,
             cuentadestinoid
         FROM cloud_bank_db.ms4_ms4_transacciones
+        WHERE year = '2025'
+          AND month = '10'
+          AND day = '08'
         ORDER BY fecha DESC
         LIMIT {limit}
     """,
@@ -158,12 +197,27 @@ PREDEFINED_QUERIES = {
         FROM cloud_bank_db.ms4_ms4_transacciones t
         LEFT JOIN cloud_bank_db.ms2_ms2_cuentas co 
             ON t.cuentaorigenid = co.cuenta_id
+            AND co.year = '2025'
+            AND co.month = '10'
+            AND co.day = '08'
         LEFT JOIN cloud_bank_db.ms2_ms2_cuentas cd 
             ON t.cuentadestinoid = cd.cuenta_id
+            AND cd.year = '2025'
+            AND cd.month = '10'
+            AND cd.day = '08'
         LEFT JOIN cloud_bank_db.ms1_ms1_clientes clio 
             ON co.cliente_id = clio.cliente_id
+            AND clio.year = '2025'
+            AND clio.month = '10'
+            AND clio.day = '08'
         LEFT JOIN cloud_bank_db.ms1_ms1_clientes clid 
             ON cd.cliente_id = clid.cliente_id
+            AND clid.year = '2025'
+            AND clid.month = '10'
+            AND clid.day = '08'
+        WHERE t.year = '2025'
+          AND t.month = '10'
+          AND t.day = '08'
         ORDER BY t.fecha DESC
         LIMIT {limit}
     """,
@@ -233,6 +287,9 @@ PREDEFINED_QUERIES = {
             'clientes' as categoria
         FROM cloud_bank_db.ms1_ms1_clientes
         WHERE estado = 'activo'
+          AND year = '2025'
+          AND month = '10'
+          AND day = '08'
     """,
     
     # ========== ANÁLISIS DE NEGOCIO ==========
@@ -248,8 +305,17 @@ PREDEFINED_QUERIES = {
         FROM cloud_bank_db.ms1_ms1_clientes cli
         LEFT JOIN cloud_bank_db.ms2_ms2_cuentas c 
             ON cli.cliente_id = c.cliente_id
+            AND c.year = '2025'
+            AND c.month = '10'
+            AND c.day = '08'
         LEFT JOIN cloud_bank_db.ms4_ms4_transacciones t 
-            ON c.cuenta_id = t.cuentaorigenid OR c.cuenta_id = t.cuentadestinoid
+            ON (c.cuenta_id = t.cuentaorigenid OR c.cuenta_id = t.cuentadestinoid)
+            AND t.year = '2025'
+            AND t.month = '10'
+            AND t.day = '08'
+        WHERE cli.year = '2025'
+          AND cli.month = '10'
+          AND cli.day = '08'
         GROUP BY cli.cliente_id, cli.nombre, cli.apellido, cli.email
         HAVING SUM(c.saldo) > {threshold}
         ORDER BY patrimonio_total DESC
@@ -264,6 +330,9 @@ PREDEFINED_QUERIES = {
             SUM(monto) as monto_total
         FROM cloud_bank_db.ms4_ms4_transacciones
         WHERE fecha >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
+          AND year = '2025'
+          AND month = '10'
+          AND day = '08'
         GROUP BY DATE_FORMAT(fecha, '%Y-%m-%d'), tipo
         ORDER BY fecha DESC, monto_total DESC
     """
