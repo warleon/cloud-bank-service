@@ -104,7 +104,7 @@ def insert_cuentas_batch(conn, num_records=20000, batch_size=1000):
             
             moneda = 'PEN'
             fecha_apertura = datetime.now() - timedelta(days=random.randint(0, 365*5))
-            estado = random.choice(['activa', 'activa', 'activa', 'inactiva'])  # 75% activas
+            estado = random.choice(['activa', 'activa', 'activa', 'bloqueada'])  # 75% activas, 25% bloqueadas
             
             cuentas_batch.append((
                 cuenta_id, cliente_id, numero_cuenta, tipo_cuenta_id,
