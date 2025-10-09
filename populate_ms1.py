@@ -50,6 +50,9 @@ def insert_clientes_batch(conn, num_records=20000, batch_size=1000):
     
     print(f"📝 Insertando {num_records} clientes en lotes de {batch_size}...")
     
+    # Set para rastrear números de documento ya usados
+    numeros_usados = set()
+    
     for batch_start in range(0, num_records, batch_size):
         clientes_batch = []
         documentos_batch = []
@@ -69,14 +72,27 @@ def insert_clientes_batch(conn, num_records=20000, batch_size=1000):
                 cliente_id, nombre, apellido, email, telefono, fecha_registro, estado
             ))
             
-            # Documento de identidad
+            # Documento de identidad - GARANTIZAR UNICIDAD
             tipo_doc = random.choice(['DNI', 'DNI', 'DNI', 'Pasaporte', 'Carnet Extranjeria'])  # Mayoría DNI
-            if tipo_doc == 'DNI':
-                numero_doc = str(random.randint(10000000, 99999999))
-            elif tipo_doc == 'Pasaporte':
-                numero_doc = f"P{random.randint(1000000, 9999999)}"
-            else:
-                numero_doc = str(random.randint(100000000, 999999999))
+            
+            # Generar número único
+            numero_doc = None
+            intentos = 0
+            while numero_doc is None or numero_doc in numeros_usados:
+                if tipo_doc == 'DNI':
+                    # DNI de 8 dígitos único
+                    numero_doc = str(10000000 + cliente_id + intentos * 100000).zfill(8)
+                elif tipo_doc == 'Pasaporte':
+                    # Pasaporte único
+                    numero_doc = f"P{(1000000 + cliente_id + intentos * 100000):07d}"
+                else:
+                    # Carnet Extranjeria único
+                    numero_doc = str(100000000 + cliente_id + intentos * 1000000)
+                intentos += 1
+                if intentos > 100:  # Evitar loop infinito
+                    break
+            
+            numeros_usados.add(numero_doc)
             
             fecha_emision = fecha_registro.date()
             fecha_vencimiento = fecha_emision + timedelta(days=random.randint(365*3, 365*10))
