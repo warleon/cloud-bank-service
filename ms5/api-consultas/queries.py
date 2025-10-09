@@ -175,9 +175,9 @@ PREDEFINED_QUERIES = {
             CAST(COUNT(DISTINCT cliente_id) AS VARCHAR) as valor,
             'clientes' as categoria
         FROM cloud_bank_db.ms1_ms1_clientes
-        WHERE year = CAST(year(current_date) AS VARCHAR)
-          AND month = CAST(month(current_date) AS VARCHAR)
-          AND day = CAST(day(current_date) AS VARCHAR)
+        WHERE year = '2025'
+          AND month = '10'
+          AND day = '08'
         
         UNION ALL
         
@@ -186,9 +186,9 @@ PREDEFINED_QUERIES = {
             CAST(COUNT(DISTINCT cuenta_id) AS VARCHAR) as valor,
             'cuentas' as categoria
         FROM cloud_bank_db.ms2_ms2_cuentas
-        WHERE year = CAST(year(current_date) AS VARCHAR)
-          AND month = CAST(month(current_date) AS VARCHAR)
-          AND day = CAST(day(current_date) AS VARCHAR)
+        WHERE year = '2025'
+          AND month = '10'
+          AND day = '08'
         
         UNION ALL
         
@@ -198,9 +198,9 @@ PREDEFINED_QUERIES = {
             'cuentas' as categoria
         FROM cloud_bank_db.ms2_ms2_cuentas
         WHERE saldo IS NOT NULL
-          AND year = CAST(year(current_date) AS VARCHAR)
-          AND month = CAST(month(current_date) AS VARCHAR)
-          AND day = CAST(day(current_date) AS VARCHAR)
+          AND year = '2025'
+          AND month = '10'
+          AND day = '08'
         
         UNION ALL
         
@@ -209,9 +209,9 @@ PREDEFINED_QUERIES = {
             CAST(COUNT(DISTINCT transaccionid) AS VARCHAR) as valor,
             'transacciones' as categoria
         FROM cloud_bank_db.ms4_ms4_transacciones
-        WHERE year = CAST(year(current_date) AS VARCHAR)
-          AND month = CAST(month(current_date) AS VARCHAR)
-          AND day = CAST(day(current_date) AS VARCHAR)
+        WHERE year = '2025'
+          AND month = '10'
+          AND day = '08'
         
         UNION ALL
         
@@ -221,9 +221,9 @@ PREDEFINED_QUERIES = {
             'transacciones' as categoria
         FROM cloud_bank_db.ms4_ms4_transacciones
         WHERE monto IS NOT NULL
-          AND year = CAST(year(current_date) AS VARCHAR)
-          AND month = CAST(month(current_date) AS VARCHAR)
-          AND day = CAST(day(current_date) AS VARCHAR)
+          AND year = '2025'
+          AND month = '10'
+          AND day = '08'
         
         UNION ALL
         
