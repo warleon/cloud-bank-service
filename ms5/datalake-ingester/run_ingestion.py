@@ -36,6 +36,10 @@ def ingest_postgresql_data():
     
     try:
         ingester = DataIngester('postgresql', S3_BUCKET_MS1)
+        
+        # 🧹 LIMPIAR BUCKET S3 ANTES DE INGESTAR
+        ingester.clean_s3_bucket()
+        
         ingester.connect_database()
         
         # Tabla: clientes
@@ -74,6 +78,10 @@ def ingest_mysql_data():
     
     try:
         ingester = DataIngester('mysql', S3_BUCKET_MS2)
+        
+        # 🧹 LIMPIAR BUCKET S3 ANTES DE INGESTAR
+        ingester.clean_s3_bucket()
+        
         ingester.connect_database()
         
         # Tabla: tipos_cuenta
@@ -112,6 +120,10 @@ def ingest_mongodb_data():
     
     try:
         ingester = DataIngester('mongodb', S3_BUCKET_MS4)
+        
+        # 🧹 LIMPIAR BUCKET S3 ANTES DE INGESTAR
+        ingester.clean_s3_bucket()
+        
         ingester.connect_database()
         
         # Colección: transacciones

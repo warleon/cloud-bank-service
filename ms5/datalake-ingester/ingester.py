@@ -50,6 +50,44 @@ class DataIngester:
 
         logger.info(f"Ingester inicializado - Tipo: {self.db_type}, Bucket: {self.bucket_name}")
 
+    def clean_s3_bucket(self):
+        """
+        Limpia todos los objetos del bucket S3 antes de la ingesta
+        Esto asegura que no haya datos duplicados de ingestas anteriores
+        """
+        try:
+            logger.info(f"🧹 Limpiando bucket S3: {self.bucket_name}")
+            
+            # Listar todos los objetos en el bucket
+            paginator = self.s3_client.get_paginator('list_objects_v2')
+            pages = paginator.paginate(Bucket=self.bucket_name)
+            
+            objects_deleted = 0
+            for page in pages:
+                if 'Contents' in page:
+                    # Preparar lista de objetos para eliminar
+                    objects_to_delete = [{'Key': obj['Key']} for obj in page['Contents']]
+                    
+                    if objects_to_delete:
+                        # Eliminar objetos en lote (máximo 1000 por llamada)
+                        response = self.s3_client.delete_objects(
+                            Bucket=self.bucket_name,
+                            Delete={'Objects': objects_to_delete}
+                        )
+                        objects_deleted += len(objects_to_delete)
+            
+            if objects_deleted > 0:
+                logger.info(f"✅ Bucket limpiado: {objects_deleted} objetos eliminados de {self.bucket_name}")
+            else:
+                logger.info(f"✅ Bucket ya estaba vacío: {self.bucket_name}")
+                
+        except ClientError as e:
+            logger.error(f"❌ Error al limpiar bucket S3: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"❌ Error inesperado al limpiar bucket: {e}")
+            raise
+
     def _convert_types(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Convierte tipos de datos problemáticos a tipos JSON válidos
