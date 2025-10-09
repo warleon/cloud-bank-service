@@ -370,6 +370,30 @@ PREDEFINED_QUERIES = {
           AND year = ultima_particion_clientes.max_year
           AND month = ultima_particion_clientes.max_month
           AND day = ultima_particion_clientes.max_day
+        
+        UNION ALL
+        
+        SELECT 
+            'Saldo Promedio' as metrica,
+            CAST(ROUND(AVG(CAST(saldo AS DOUBLE)), 2) AS VARCHAR) as valor,
+            'cuentas' as categoria
+        FROM cloud_bank_db.ms2_ms2_cuentas, ultima_particion_cuentas
+        WHERE saldo IS NOT NULL
+          AND year = ultima_particion_cuentas.max_year
+          AND month = ultima_particion_cuentas.max_month
+          AND day = ultima_particion_cuentas.max_day
+        
+        UNION ALL
+        
+        SELECT 
+            'Transacción Promedio' as metrica,
+            CAST(ROUND(AVG(CAST(monto AS DOUBLE)), 2) AS VARCHAR) as valor,
+            'transacciones' as categoria
+        FROM cloud_bank_db.ms4_ms4_transacciones, ultima_particion_trans
+        WHERE monto IS NOT NULL
+          AND year = ultima_particion_trans.max_year
+          AND month = ultima_particion_trans.max_month
+          AND day = ultima_particion_trans.max_day
     """,
     
     # ========== ANÁLISIS DE NEGOCIO ==========

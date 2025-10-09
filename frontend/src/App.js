@@ -553,7 +553,7 @@ function App() {
                       <div className="metric-card">
                         <h4>💰 Volumen Total</h4>
                         <p className="metric-value">
-                          {dashboardData.moneda_principal || 'PEN'} {parseFloat(dashboardData.volumen_transaccional || dashboardData.saldo_total_banco || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}
+                          {dashboardData.moneda_principal || 'PEN'} {parseFloat(dashboardData.saldo_total_banco || 0).toLocaleString('es-PE', {minimumFractionDigits: 2})}
                         </p>
                       </div>
                       <div className="metric-card">
