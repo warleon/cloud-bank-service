@@ -283,7 +283,7 @@ PREDEFINED_QUERIES = {
         
         SELECT 
             'Clientes Activos' as metrica,
-            CAST(COUNT(*) AS VARCHAR) as valor,
+            CAST(COUNT(DISTINCT cliente_id) AS VARCHAR) as valor,
             'clientes' as categoria
         FROM cloud_bank_db.ms1_ms1_clientes
         WHERE estado = 'activo'
