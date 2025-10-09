@@ -62,22 +62,19 @@ def insert_clientes_batch(conn, num_records=20000, batch_size=1000):
             apellido = fake.last_name()
             email = f"{nombre.lower()}.{apellido.lower()}{cliente_id}@{fake.free_email_domain()}"
             telefono = fake.phone_number()[:15]
-            direccion = fake.address().replace('\n', ', ')[:200]
-            fecha_nacimiento = fake.date_of_birth(minimum_age=18, maximum_age=80)
             estado = random.choice(['activo', 'activo', 'activo', 'inactivo'])  # 75% activos
             fecha_registro = datetime.now() - timedelta(days=random.randint(0, 365*5))
             
             clientes_batch.append((
-                cliente_id, nombre, apellido, email, telefono, direccion,
-                fecha_nacimiento, estado, fecha_registro
+                cliente_id, nombre, apellido, email, telefono, fecha_registro, estado
             ))
             
             # Documento de identidad
-            tipo_doc = random.choice(['DNI', 'DNI', 'DNI', 'Pasaporte', 'CE'])  # Mayoría DNI
+            tipo_doc = random.choice(['DNI', 'DNI', 'DNI', 'Pasaporte', 'Carnet Extranjeria'])  # Mayoría DNI
             if tipo_doc == 'DNI':
                 numero_doc = str(random.randint(10000000, 99999999))
             elif tipo_doc == 'Pasaporte':
-                numero_doc = fake.passport_number()
+                numero_doc = f"P{random.randint(1000000, 9999999)}"
             else:
                 numero_doc = str(random.randint(100000000, 999999999))
             
@@ -92,9 +89,8 @@ def insert_clientes_batch(conn, num_records=20000, batch_size=1000):
         try:
             cursor.executemany("""
                 INSERT INTO clientes 
-                (cliente_id, nombre, apellido, email, telefono, direccion, 
-                 fecha_nacimiento, estado, fecha_registro)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                (cliente_id, nombre, apellido, email, telefono, fecha_registro, estado)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
             """, clientes_batch)
             
             cursor.executemany("""
