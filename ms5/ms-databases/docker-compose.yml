@@ -23,6 +23,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   # PostgreSQL de prueba (Microservicio 2)
   postgres-db:
@@ -46,6 +47,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   # MongoDB de prueba (Microservicio 3)
   mongo-db:
@@ -69,3 +71,4 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped

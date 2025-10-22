@@ -15,16 +15,26 @@ services:
     networks:
       - ms2-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uadmin", "-padmin123"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-uadmin",
+          "-padmin123",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   api-cuentas:
     build: ./api
     image: br4yangc/cloud-bank-ms2:api-cuentas
     container_name: api-cuentas
-    restart: on-failure
+    restart: unless-stopped
     environment:
       DB_HOST: mysql-db
       DB_PORT: 3306

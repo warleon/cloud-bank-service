@@ -12,31 +12,31 @@
       - S3_BUCKET_MS1=${S3_BUCKET_MS1}
       - S3_BUCKET_MS2=${S3_BUCKET_MS2}
       - S3_BUCKET_MS4=${S3_BUCKET_MS4}
-      
+
       # MS1 - PostgreSQL (Clientes)
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
       - POSTGRES_USER=${POSTGRES_USER:-admin}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DATABASE=${POSTGRES_DATABASE:-clientes_db}
-      
+
       # MS2 - MySQL (Cuentas)
       - MYSQL_HOST=${MYSQL_HOST}
       - MYSQL_PORT=${MYSQL_PORT:-3306}
       - MYSQL_USER=${MYSQL_USER:-admin}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE:-cuentas_db}
-      
+
       # MS4 - MongoDB (Transacciones)
       - MONGO_HOST=${MONGO_HOST}
       - MONGO_PORT=${MONGO_PORT:-27017}
       - MONGO_USER=${MONGO_USER:-admin}
       - MONGO_PASSWORD=${MONGO_PASSWORD}
       - MONGO_DATABASE=${MONGO_DATABASE:-transacciones_db}
-      
+
       # Logging
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      
+
       # Ingestion Mode: 'once' or 'continuous'
       - INGESTION_MODE=${INGESTION_MODE:-once}
       - INGESTION_INTERVAL=${INGESTION_INTERVAL:-1}
